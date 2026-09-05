@@ -7,7 +7,7 @@ import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { serializeOrder } from '../utils/orderSerializer.js';
 import { escapeRegex } from '../utils/slug.js';
-import { getStoreSettingsDocument } from './settingsController.js';
+import { ORDER_STATUSES } from '../types/models.js';
 import type {
   AdminOrderListQuery,
   CreateOrderBody,
@@ -79,12 +79,6 @@ export const createOrder = asyncHandler(async (request, response) => {
 
   try {
     await session.withTransaction(async () => {
-      const settings = await getStoreSettingsDocument();
-
-      if (!settings.ordersOpen) {
-        throw new AppError(settings.closedMessage || 'Orders are currently closed', 409);
-      }
-
       const orderItems = [];
 
       for (const item of normalizedItems) {
@@ -215,14 +209,66 @@ export const getAdminOrder = asyncHandler(async (request, response) => {
 export const updateOrderStatus = asyncHandler(async (request, response) => {
   const { id } = request.params as { id: string };
   const { status } = request.body as UpdateOrderStatusBody;
-  const order = await OrderModel.findById(id);
+  const session = await mongoose.startSession();
+  let updatedOrder: mongoose.HydratedDocument<Order> | null = null;
 
-  if (!order) {
-    throw new AppError(orderNotFoundMessage, 404);
+  try {
+    await session.withTransaction(async () => {
+      const order = await OrderModel.findById(id).session(session);
+
+      if (!order) {
+        throw new AppError(orderNotFoundMessage, 404);
+      }
+
+      if (order.status === status) {
+        updatedOrder = order;
+        return;
+      }
+
+      const [newStatus, confirmedStatus, preparingStatus, completedStatus, cancelledStatus] =
+        ORDER_STATUSES;
+
+      if (order.status === cancelledStatus) {
+        throw new AppError('Cancelled orders cannot be reopened', 409);
+      }
+
+      if (order.status === completedStatus) {
+        throw new AppError('Completed orders cannot be changed', 409);
+      }
+
+      const allowedTransitions: Record<string, readonly string[]> = {
+        [newStatus]: [confirmedStatus, cancelledStatus],
+        [confirmedStatus]: [preparingStatus, cancelledStatus],
+        [preparingStatus]: [completedStatus, cancelledStatus],
+      };
+
+      if (!allowedTransitions[order.status]?.includes(status)) {
+        throw new AppError('Invalid order status transition', 409);
+      }
+
+      if (status === cancelledStatus) {
+        for (const item of order.items) {
+          await ProductModel.updateOne(
+            { _id: item.product },
+            { $inc: { stock: item.quantity } },
+            { session },
+          );
+        }
+
+        order.stockRestoredAt = new Date();
+      }
+
+      order.status = status;
+      await order.save({ session });
+      updatedOrder = order;
+    });
+  } finally {
+    await session.endSession();
   }
 
-  order.status = status;
-  await order.save();
+  if (!updatedOrder) {
+    throw new AppError('Order could not be updated', 500);
+  }
 
-  return sendSuccess(response, { order: serializeOrder(order) }, 'Order status updated successfully');
+  return sendSuccess(response, { order: serializeOrder(updatedOrder) }, 'Order status updated successfully');
 });

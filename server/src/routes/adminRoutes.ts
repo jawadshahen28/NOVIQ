@@ -25,6 +25,15 @@ import {
   updateCategoryBodySchema,
   updateProductBodySchema,
 } from '../validators/catalogValidators.js';
+import {
+  getAdminOrder,
+  listAdminOrders,
+  updateOrderStatus,
+} from '../controllers/orderController.js';
+import {
+  adminOrderListQuerySchema,
+  updateOrderStatusBodySchema,
+} from '../validators/orderValidators.js';
 
 const adminRouter = Router();
 
@@ -49,5 +58,13 @@ adminRouter.patch(
   updateProduct,
 );
 adminRouter.delete('/products/:id', validateRequest({ params: resourceIdParamsSchema }), deleteProduct);
+
+adminRouter.get('/orders', validateRequest({ query: adminOrderListQuerySchema }), listAdminOrders);
+adminRouter.get('/orders/:id', validateRequest({ params: resourceIdParamsSchema }), getAdminOrder);
+adminRouter.patch(
+  '/orders/:id/status',
+  validateRequest({ body: updateOrderStatusBodySchema, params: resourceIdParamsSchema }),
+  updateOrderStatus,
+);
 
 export { adminRouter };

@@ -36,7 +36,7 @@ export interface CartLine {
 export interface SubmittedOrderItem {
   productId: string;
   productName: string;
-  productSlug: string;
+  productSlug?: string;
   image: string;
   quantity: number;
   unitPrice: number;
@@ -57,6 +57,7 @@ export type OrderStatus = 'جديد' | 'تم التأكيد' | 'قيد التج�
 
 export interface AdminOrderItem {
   productId: string;
+  productSlug?: string;
   name: string;
   image: string;
   quantity: number;

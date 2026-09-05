@@ -16,12 +16,17 @@ const orderItemSchema = z
     path: ['productId'],
   });
 
+const phoneSchema = requiredTextSchema('Customer phone', 40).refine(
+  (value) => /^[+()\d\s-]{7,40}$/.test(value),
+  'Customer phone is invalid',
+);
+
 export const createOrderBodySchema = z.object({
   customer: z.object({
     address: requiredTextSchema('Customer address', 500),
     name: requiredTextSchema('Customer name', 120),
     notes: z.string().trim().max(1_000).optional(),
-    phone: requiredTextSchema('Customer phone', 40),
+    phone: phoneSchema,
   }),
   items: z.array(orderItemSchema).min(1).max(50),
 });

@@ -24,6 +24,9 @@ const customerSchema = new Schema(
       trim: true,
       type: String,
     },
+    stockRestoredAt: {
+      type: Date,
+    },
   },
   {
     _id: false,

@@ -5,9 +5,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { useCart } from '../features/cart/CartContext';
 import CheckoutSummary from '../features/checkout/components/CheckoutSummary';
+import { ApiClientError } from '../services/apiClient';
+import { createOrder, type CreatedOrder } from '../services/orderApi';
 import { saveSubmittedOrderSnapshot } from '../services/submittedOrderStorage';
-import type { CartLine, SubmittedOrderSnapshot } from '../types/catalog';
-import { formatCurrency, getDiscountedPrice } from '../utils/format';
+import type { SubmittedOrderSnapshot } from '../types/catalog';
+import { formatCurrency } from '../utils/format';
 
 interface CheckoutFormValues {
   fullName: string;
@@ -20,7 +22,6 @@ type CheckoutErrors = Partial<Record<keyof Omit<CheckoutFormValues, 'notes'>, st
 
 const cashOnDeliveryMethod = 'الدفع عند الاستلام';
 const submissionErrorMessage = 'تعذر إرسال الطلب، يرجى المحاولة مرة أخرى.';
-const submitFeedbackDelayMs = 250;
 
 const initialFormValues: CheckoutFormValues = {
   fullName: '',
@@ -29,38 +30,24 @@ const initialFormValues: CheckoutFormValues = {
   notes: '',
 };
 
-function createSubmittedOrderSnapshot(
-  items: CartLine[],
-  subtotal: number,
-): SubmittedOrderSnapshot {
-  const shipping = 0;
-
+function createSubmittedOrderSnapshot(order: CreatedOrder): SubmittedOrderSnapshot {
   return {
-    items: items.map((item) => {
-      const unitPrice = getDiscountedPrice(item.product);
-
-      return {
-        productId: item.product.id,
-        productName: item.product.name,
-        productSlug: item.product.slug,
-        image: item.product.images[0],
-        quantity: item.quantity,
-        unitPrice,
-        lineTotal: unitPrice * item.quantity,
-      };
-    }),
-    subtotal,
-    shipping,
-    total: subtotal + shipping,
-    paymentMethod: cashOnDeliveryMethod,
-    submittedAt: new Date().toISOString(),
+    items: order.items.map((item) => ({
+      image: item.image,
+      lineTotal: item.lineTotal,
+      productId: item.productId,
+      productName: item.name,
+      productSlug: item.productSlug ?? '',
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    })),
+    orderNumber: order.orderNumber,
+    paymentMethod: order.paymentMethod || cashOnDeliveryMethod,
+    shipping: order.shipping,
+    submittedAt: order.createdAt,
+    subtotal: order.subtotal,
+    total: order.total,
   };
-}
-
-function waitForSubmitFeedback() {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, submitFeedbackDelayMs);
-  });
 }
 
 export default function CheckoutPage() {
@@ -121,20 +108,38 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
     isSubmittingRef.current = true;
 
-    const submittedOrder = createSubmittedOrderSnapshot(items, subtotal);
-
     try {
-      await waitForSubmitFeedback();
+      const customer = {
+        address: formValues.address.trim(),
+        name: formValues.fullName.trim(),
+        phone: formValues.phone.trim(),
+        ...(formValues.notes.trim() ? { notes: formValues.notes.trim() } : {}),
+      };
+      const { order } = await createOrder({
+        customer,
+        items: items.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+        })),
+      });
+      const submittedOrder = createSubmittedOrderSnapshot(order);
+
       saveSubmittedOrderSnapshot(submittedOrder);
       clearCart();
       navigate('/order-success', {
         replace: true,
         state: { order: submittedOrder },
       });
-    } catch {
+    } catch (error) {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
-      setSubmitError(submissionErrorMessage);
+      setSubmitError(
+        error instanceof ApiClientError && error.status === 409
+          ? 'الكمية المطلوبة غير متوفرة لأحد المنتجات.'
+          : error instanceof ApiClientError && error.status === 400
+            ? 'يرجى مراجعة بيانات الطلب والمحاولة مرة أخرى.'
+            : submissionErrorMessage,
+      );
     }
   }
 

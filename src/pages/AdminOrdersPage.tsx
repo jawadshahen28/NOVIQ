@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react';
-import { orderStatuses, orders as initialOrders } from '../data/orders';
+import { useEffect, useMemo, useState } from 'react';
 import OrderDetailsDrawer from '../features/admin/orders/components/OrderDetailsDrawer';
 import OrdersFilters, {
   type OrderDateFilter,
@@ -10,7 +9,11 @@ import OrdersSummary, {
   type OrderSummaryCounts,
 } from '../features/admin/orders/components/OrdersSummary';
 import OrdersTable from '../features/admin/orders/components/OrdersTable';
+import { ApiClientError } from '../services/apiClient';
+import { listAdminOrders, updateAdminOrderStatus } from '../services/orderApi';
 import type { AdminOrder, OrderStatus } from '../types/catalog';
+
+const orderStatuses: OrderStatus[] = ['جديد', 'تم التأكيد', 'قيد التجهيز', 'مكتمل', 'ملغي'];
 
 function normalizeSearchValue(value: string) {
   return value.trim().toLowerCase();
@@ -109,7 +112,9 @@ function filterOrders(
 }
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<AdminOrder[]>(initialOrders);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>('all');
   const [dateFilter, setDateFilter] = useState<OrderDateFilter>('all');
@@ -129,17 +134,52 @@ export default function AdminOrdersPage() {
   const hasActiveFilters = Boolean(searchTerm.trim()) || statusFilter !== 'all' || dateFilter !== 'all';
   const emptyMessage = orders.length === 0 ? 'لا توجد طلبات حالياً' : 'لا توجد طلبات مطابقة';
 
+  useEffect(() => {
+    let isMounted = true;
+
+    listAdminOrders()
+      .then(({ orders: fetchedOrders }) => {
+        if (isMounted) {
+          setOrders(fetchedOrders);
+          setLoadError('');
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setLoadError('تعذر تحميل الطلبات، يرجى المحاولة مرة أخرى.');
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   function resetFilters() {
     setSearchTerm('');
     setStatusFilter('all');
     setDateFilter('all');
   }
 
-  function updateOrderStatus(orderId: string, status: OrderStatus) {
-    setOrders((currentOrders) =>
-      currentOrders.map((order) => (order.id === orderId ? { ...order, status } : order)),
-    );
-    setStatusFeedback('تم تحديث حالة الطلب');
+  async function updateOrderStatus(orderId: string, status: OrderStatus) {
+    try {
+      const { order } = await updateAdminOrderStatus(orderId, status);
+      setOrders((currentOrders) =>
+        currentOrders.map((currentOrder) => (currentOrder.id === orderId ? order : currentOrder)),
+      );
+      setStatusFeedback('تم تحديث حالة الطلب');
+    } catch (error) {
+      setStatusFeedback(
+        error instanceof ApiClientError && error.status === 409
+          ? 'لا يمكن تحديث حالة الطلب بهذا الانتقال.'
+          : 'تعذر تحديث حالة الطلب، يرجى المحاولة مرة أخرى.',
+      );
+    }
   }
 
   function openOrder(orderId: string) {
@@ -183,7 +223,19 @@ export default function AdminOrdersPage() {
         statuses={orderStatuses}
       />
 
-      {visibleOrders.length > 0 ? (
+      {loadError ? (
+        <div
+          className="rounded-md border border-noviq-gold/50 bg-noviq-secondary p-6 text-center text-sm leading-7 text-noviq-gold"
+          role="alert"
+          data-orders-error
+        >
+          {loadError}
+        </div>
+      ) : isLoading ? (
+        <div className="rounded-md border border-dashed border-noviq-border bg-noviq-card p-6 text-center text-sm leading-7 text-noviq-muted">
+          جاري تحميل الطلبات...
+        </div>
+      ) : visibleOrders.length > 0 ? (
         <>
           <OrdersTable orders={visibleOrders} onOpenOrder={openOrder} />
           <OrdersMobileCards orders={visibleOrders} onOpenOrder={openOrder} />

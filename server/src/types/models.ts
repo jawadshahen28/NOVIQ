@@ -87,6 +87,7 @@ export interface Order extends TimestampFields {
   total: number;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
+  stockRestoredAt?: Date;
 }
 
 export interface StoreSettings extends TimestampFields {
