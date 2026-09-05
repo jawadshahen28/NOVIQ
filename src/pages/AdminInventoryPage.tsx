@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAdminCatalog } from '../features/admin/catalog/AdminCatalogContext';
 import InventoryFilters from '../features/admin/inventory/components/InventoryFilters';
 import InventoryMobileCards from '../features/admin/inventory/components/InventoryMobileCards';
@@ -13,6 +13,12 @@ import {
   type ProductStockFilter,
 } from '../features/admin/products/productAdminUtils';
 import type { CategorySlug, Product } from '../types/catalog';
+import {
+  applyInventoryItem,
+  listInventory,
+  updateInventoryStock,
+  type InventorySummaryData,
+} from '../services/inventoryApi';
 
 function normalizeSearchValue(value: string) {
   return value.trim().toLowerCase();
@@ -48,38 +54,18 @@ function filterProducts(
   });
 }
 
-function createInventorySummary(products: Product[]) {
-  return products.reduce(
-    (summary, product) => {
-      const stockCondition = getStockCondition(product.stock);
-
-      summary.totalUnits += product.stock;
-
-      if (stockCondition === 'available') {
-        summary.availableProducts += 1;
-      }
-
-      if (stockCondition === 'low') {
-        summary.lowStockProducts += 1;
-      }
-
-      if (stockCondition === 'out') {
-        summary.outOfStockProducts += 1;
-      }
-
-      return summary;
-    },
-    {
-      totalUnits: 0,
-      availableProducts: 0,
-      lowStockProducts: 0,
-      outOfStockProducts: 0,
-    },
-  );
-}
-
 export default function AdminInventoryPage() {
-  const { categories, products, updateProductStock } = useAdminCatalog();
+  const { categories, products } = useAdminCatalog();
+  const [inventoryProducts, setInventoryProducts] = useState<Product[]>(products);
+  const [summary, setSummary] = useState<InventorySummaryData>({
+    lowStockProducts: 0,
+    outOfStockProducts: 0,
+    threshold: 3,
+    totalProducts: 0,
+    totalUnits: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState<ProductStockFilter>('all');
@@ -88,15 +74,43 @@ export default function AdminInventoryPage() {
   const [feedback, setFeedback] = useState('');
 
   const categoryMap = useMemo(() => createCategoryNameMap(categories), [categories]);
-  const summary = useMemo(() => createInventorySummary(products), [products]);
   const visibleProducts = useMemo(
-    () => filterProducts(products, searchTerm, categoryFilter, stockFilter, categoryMap),
-    [categoryFilter, categoryMap, products, searchTerm, stockFilter],
+    () => filterProducts(inventoryProducts, searchTerm, categoryFilter, stockFilter, categoryMap),
+    [categoryFilter, categoryMap, inventoryProducts, searchTerm, stockFilter],
   );
   const hasActiveFilters =
     Boolean(searchTerm.trim()) || categoryFilter !== 'all' || stockFilter !== 'all';
   const emptyMessage =
-    products.length === 0 ? 'لا توجد منتجات حالياً' : 'لا توجد منتجات مطابقة';
+    inventoryProducts.length === 0 ? 'لا توجد منتجات حالياً' : 'لا توجد منتجات مطابقة';
+
+  useEffect(() => {
+    let isMounted = true;
+
+    listInventory()
+      .then(({ items, summary: inventorySummary }) => {
+        if (!isMounted) return;
+        setInventoryProducts(
+          items
+            .map((item) => {
+              const product = products.find((candidate) => candidate.id === item.id);
+              return product ? applyInventoryItem(product, item) : null;
+            })
+            .filter((product): product is Product => product !== null),
+        );
+        setSummary(inventorySummary);
+        setLoadError('');
+      })
+      .catch(() => {
+        if (isMounted) setLoadError('تعذر تحميل بيانات المخزون، يرجى المحاولة مرة أخرى.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [products]);
 
   function resetFilters() {
     setSearchTerm('');
@@ -104,11 +118,27 @@ export default function AdminInventoryPage() {
     setStockFilter('all');
   }
 
-  function saveStock(productId: string, stock: number) {
-    updateProductStock(productId, stock);
-    setLastUpdatedById((current) => ({ ...current, [productId]: new Date().toISOString() }));
-    setFeedback('تم تحديث المخزون');
-    setEditingStockProduct(null);
+  async function saveStock(productId: string, stock: number) {
+    const product = inventoryProducts.find((item) => item.id === productId);
+    if (!product) return;
+
+    try {
+      const { item } = await updateInventoryStock(productId, stock, product.stock);
+      setInventoryProducts((current) =>
+        current.map((currentProduct) => (currentProduct.id === productId
+          ? applyInventoryItem(currentProduct, item)
+          : currentProduct)),
+      );
+      setSummary((current) => ({
+        ...current,
+        totalUnits: current.totalUnits - product.stock + item.stock,
+      }));
+      setLastUpdatedById((current) => ({ ...current, [productId]: item.updatedAt ?? new Date().toISOString() }));
+      setFeedback('تم تحديث المخزون');
+      setEditingStockProduct(null);
+    } catch {
+      setFeedback('تعذر تحديث المخزون، ربما تغيرت الكمية. حدّث الصفحة وحاول مرة أخرى.');
+    }
   }
 
   return (
@@ -135,8 +165,14 @@ export default function AdminInventoryPage() {
         </p>
       ) : null}
 
+      {loadError ? (
+        <p className="rounded-md border border-noviq-gold/40 bg-noviq-card px-4 py-3 text-sm font-semibold text-noviq-gold" role="alert">
+          {loadError}
+        </p>
+      ) : null}
+
       <InventorySummary
-        availableProducts={summary.availableProducts}
+        availableProducts={summary.totalProducts - summary.lowStockProducts - summary.outOfStockProducts}
         lowStockProducts={summary.lowStockProducts}
         outOfStockProducts={summary.outOfStockProducts}
         totalUnits={summary.totalUnits}
@@ -154,7 +190,11 @@ export default function AdminInventoryPage() {
         stockFilter={stockFilter}
       />
 
-      {visibleProducts.length > 0 ? (
+      {isLoading ? (
+        <div className="rounded-md border border-dashed border-noviq-border bg-noviq-card p-6 text-center text-sm leading-7 text-noviq-muted">
+          جاري تحميل المخزون...
+        </div>
+      ) : visibleProducts.length > 0 ? (
         <>
           <InventoryTable
             categoryMap={categoryMap}

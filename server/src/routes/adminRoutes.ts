@@ -34,6 +34,11 @@ import {
   adminOrderListQuerySchema,
   updateOrderStatusBodySchema,
 } from '../validators/orderValidators.js';
+import { listInventory, updateInventoryStock } from '../controllers/inventoryController.js';
+import {
+  inventoryProductParamsSchema,
+  updateInventoryStockBodySchema,
+} from '../validators/inventoryValidators.js';
 
 const adminRouter = Router();
 
@@ -47,6 +52,13 @@ adminRouter.patch(
   '/categories/:id',
   validateRequest({ body: updateCategoryBodySchema, params: resourceIdParamsSchema }),
   updateCategory,
+);
+
+adminRouter.get('/inventory', listInventory);
+adminRouter.patch(
+  '/inventory/:id',
+  validateRequest({ body: updateInventoryStockBodySchema, params: inventoryProductParamsSchema }),
+  updateInventoryStock,
 );
 adminRouter.delete('/categories/:id', validateRequest({ params: resourceIdParamsSchema }), deleteCategory);
 
