@@ -19,6 +19,7 @@ import {
   updateProductStock as updateProductStockApi,
 } from '../../../services/catalogApi';
 import type { Category, Product } from '../../../types/catalog';
+import { useAdminAuth } from '../auth/AdminAuthContext';
 
 interface AdminCatalogContextValue {
   categories: Category[];
@@ -36,17 +37,36 @@ interface AdminCatalogContextValue {
 const AdminCatalogContext = createContext<AdminCatalogContextValue | undefined>(undefined);
 
 export function AdminCatalogProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAdminAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [catalogError, setCatalogError] = useState(false);
 
   useEffect(() => {
-    void Promise.all([listCategories(true), listProducts({ admin: true })]).then(
-      ([categoryResponse, productResponse]) => {
-        setCategories(categoryResponse.categories);
-        setProducts(productResponse.products);
-      },
-    );
-  }, []);
+    if (isAuthLoading || !isAuthenticated) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void Promise.all([listCategories(true), listProducts({ admin: true })])
+      .then(([categoryResponse, productResponse]) => {
+        if (isMounted) {
+          setCategories(categoryResponse.categories);
+          setProducts(productResponse.products);
+          setCatalogError(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setCatalogError(true);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, isAuthLoading]);
 
   const addProduct = useCallback(async (product: Product) => {
     const response = await createProductApi(product);
@@ -130,7 +150,16 @@ export function AdminCatalogProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <AdminCatalogContext.Provider value={value}>{children}</AdminCatalogContext.Provider>;
+  return (
+    <AdminCatalogContext.Provider value={value}>
+      {catalogError ? (
+        <p className="mb-4 text-sm font-semibold text-noviq-gold">
+          تعذر تحميل بيانات المنتجات والفئات
+        </p>
+      ) : null}
+      {children}
+    </AdminCatalogContext.Provider>
+  );
 }
 
 export function useAdminCatalog() {
