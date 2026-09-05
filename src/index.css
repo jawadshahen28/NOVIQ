@@ -1,0 +1,164 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --noviq-black: #080a09;
+  --noviq-pure: #050605;
+  --noviq-secondary: #0d0f0e;
+  --noviq-card: #101210;
+  --noviq-card-hover: #131512;
+  --noviq-border: #292a27;
+  --noviq-gold: #c6a04a;
+  --noviq-gold-hover: #b58e3e;
+  --noviq-gold-dark: #80652d;
+  --noviq-gold-border: rgba(198, 160, 74, 0.45);
+  --noviq-gold-rgb: 198 160 74;
+  --noviq-gold-hover-rgb: 181 142 62;
+  --noviq-gold-dark-rgb: 128 101 45;
+  --noviq-text: #f5f3ee;
+  --noviq-secondary-text: #b5b2aa;
+  --noviq-product-text: #8e8b84;
+  --noviq-muted: #77756f;
+  --noviq-whatsapp: #25d366;
+  color: var(--noviq-text);
+  background: var(--noviq-black);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--noviq-black);
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--noviq-black);
+  color: var(--noviq-text);
+  font-family: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', Tahoma, sans-serif;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+::selection {
+  background: var(--noviq-gold);
+  color: var(--noviq-black);
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif;
+    letter-spacing: 0;
+  }
+}
+
+@layer components {
+  .luxury-container {
+    @apply mx-auto box-border w-full max-w-[1380px] px-3.5 sm:px-6 lg:px-8 xl:px-10;
+  }
+
+  .focus-ring {
+    @apply outline-none ring-2 ring-noviq-gold ring-offset-2 ring-offset-noviq-black;
+  }
+
+  .panel {
+    @apply rounded-md border border-noviq-border bg-noviq-card;
+  }
+
+  .field {
+    @apply w-full rounded-md border border-noviq-border bg-noviq-secondary px-4 py-3 text-sm text-noviq-text outline-none transition placeholder:text-noviq-muted focus:border-noviq-gold;
+  }
+
+  [data-add-to-cart-success='true'] {
+    border-color: #2fbf71 !important;
+    background-color: #1f8f5f !important;
+    color: var(--noviq-text) !important;
+  }
+
+  .home-reveal {
+    animation: homeReveal 480ms ease both;
+  }
+
+  .hero-image-reveal {
+    animation: heroImageReveal 700ms ease both;
+  }
+
+  .hero-text-reveal {
+    animation: heroTextReveal 600ms ease both;
+  }
+}
+
+@keyframes heroImageReveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes heroTextReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes homeReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

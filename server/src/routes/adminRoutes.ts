@@ -1,0 +1,53 @@
+import { Router } from 'express';
+import {
+  createCategory,
+  deleteCategory,
+  listAdminCategories,
+  updateCategory,
+} from '../controllers/categoryController.js';
+import {
+  createProduct,
+  deleteProduct,
+  listAdminProducts,
+  updateProduct,
+} from '../controllers/productController.js';
+import { requireAdminAuth } from '../middleware/requireAdminAuth.js';
+import { uploadRateLimiter } from '../middleware/rateLimit.js';
+import { uploadImageFile } from '../middleware/uploadMiddleware.js';
+import { validateRequest } from '../middleware/validateRequest.js';
+import { uploadImage } from '../controllers/uploadController.js';
+import {
+  adminCategoryListQuerySchema,
+  adminProductListQuerySchema,
+  createCategoryBodySchema,
+  createProductBodySchema,
+  resourceIdParamsSchema,
+  updateCategoryBodySchema,
+  updateProductBodySchema,
+} from '../validators/catalogValidators.js';
+
+const adminRouter = Router();
+
+adminRouter.use(requireAdminAuth);
+
+adminRouter.post('/uploads/image', uploadRateLimiter, uploadImageFile, uploadImage);
+
+adminRouter.get('/categories', validateRequest({ query: adminCategoryListQuerySchema }), listAdminCategories);
+adminRouter.post('/categories', validateRequest({ body: createCategoryBodySchema }), createCategory);
+adminRouter.patch(
+  '/categories/:id',
+  validateRequest({ body: updateCategoryBodySchema, params: resourceIdParamsSchema }),
+  updateCategory,
+);
+adminRouter.delete('/categories/:id', validateRequest({ params: resourceIdParamsSchema }), deleteCategory);
+
+adminRouter.get('/products', validateRequest({ query: adminProductListQuerySchema }), listAdminProducts);
+adminRouter.post('/products', validateRequest({ body: createProductBodySchema }), createProduct);
+adminRouter.patch(
+  '/products/:id',
+  validateRequest({ body: updateProductBodySchema, params: resourceIdParamsSchema }),
+  updateProduct,
+);
+adminRouter.delete('/products/:id', validateRequest({ params: resourceIdParamsSchema }), deleteProduct);
+
+export { adminRouter };
