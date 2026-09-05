@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  LineChart,
   Boxes,
   LayoutDashboard,
   Package,
@@ -23,6 +24,7 @@ export const adminNavigationItems: AdminNavigationItem[] = [
   { label: 'الفئات', to: '/admin/categories', icon: Tags },
   { label: 'المخزون', to: '/admin/inventory', icon: Boxes },
   { label: 'التقارير', to: '/admin/reports', icon: BarChart3 },
+  { label: 'الزوار والتحليلات', to: '/admin/analytics', icon: LineChart },
   { label: 'الإعدادات', to: '/admin/settings', icon: Settings },
 ];
 

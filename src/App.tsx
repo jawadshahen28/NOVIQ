@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AdminAuthProvider } from './features/admin/auth/AdminAuthContext';
 import ProtectedAdminRoute from './features/admin/auth/ProtectedAdminRoute';
 import { CartProvider } from './features/cart/CartContext';
@@ -21,6 +22,19 @@ import HomePage from './pages/HomePage';
 import NotFoundPage from './pages/NotFoundPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
 import ProductPage from './pages/ProductPage';
+import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
+import { trackStorefrontRoute } from './services/analyticsApi';
+
+function StorefrontAnalyticsTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/admin')) return;
+    trackStorefrontRoute(`${location.pathname}${location.search}`);
+  }, [location.pathname, location.search]);
+
+  return null;
+}
 
 export default function App() {
   return (
@@ -28,6 +42,7 @@ export default function App() {
       <CartProvider>
         <AdminAuthProvider>
           <BrowserRouter>
+          <StorefrontAnalyticsTracker />
           <Routes>
             <Route element={<StoreLayout />}>
               <Route index element={<HomePage />} />
@@ -48,6 +63,7 @@ export default function App() {
                 <Route path="categories" element={<AdminCategoriesPage />} />
                 <Route path="inventory" element={<AdminInventoryPage />} />
                 <Route path="reports" element={<AdminReportsPage />} />
+                <Route path="analytics" element={<AdminAnalyticsPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="*" element={<AdminNotFoundPage />} />
               </Route>

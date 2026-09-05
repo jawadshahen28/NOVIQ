@@ -1,95 +1,49 @@
-import {
-  Banknote,
-  CalendarDays,
-  CheckCircle2,
-  ClipboardList,
-  Clock3,
-  PackageCheck,
-  PackageX,
-  ReceiptText,
-  TrendingUp,
-  WalletCards,
-} from 'lucide-react';
-import DashboardStatCard from '../features/admin/dashboard/components/DashboardStatCard';
-import LowStockList from '../features/admin/dashboard/components/LowStockList';
-import OrderMetricCard from '../features/admin/dashboard/components/OrderMetricCard';
-import RecentOrders from '../features/admin/dashboard/components/RecentOrders';
-import SalesChart from '../features/admin/dashboard/components/SalesChart';
-import TopProducts from '../features/admin/dashboard/components/TopProducts';
-import {
-  dashboardKpis,
-  lowStockProducts,
-  orderMetrics,
-  recentOrders,
-  salesTrend,
-  topSellingProducts,
-} from '../features/admin/dashboard/dashboardData';
+import { useEffect, useState } from 'react';
+import { getAdminDashboard } from '../services/analyticsApi';
+import { formatCurrency } from '../utils/format';
 
-const kpiIcons = [Banknote, WalletCards, TrendingUp, CheckCircle2];
-const metricIcons = [ReceiptText, ClipboardList, Clock3, PackageCheck, PackageX];
-
-const arabicToday = new Intl.DateTimeFormat('ar-IL', {
-  weekday: 'long',
-  day: '2-digit',
-  month: 'long',
-  year: 'numeric',
-}).format(new Date());
+interface DashboardData {
+  kpis: { salesToday: number; ordersToday: number; pendingOrders: number; lowStockProducts: number; visitorsToday: number };
+  recentOrders: Array<{ id: string; customerName: string; total: number; status: string }>;
+  salesTrend: Array<{ label: string; value: number }>;
+  topProducts: Array<{ id: string; name: string; unitsSold: number }>;
+  lowStock: Array<{ id: string; name: string; stock: number }>;
+}
 
 export default function AdminDashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    getAdminDashboard()
+      .then((value) => setData(value as DashboardData))
+      .catch(() => setError('تعذر تحميل بيانات لوحة التحكم، يرجى المحاولة مرة أخرى.'));
+  }, []);
+
+  if (error) return <p className="rounded-md border border-noviq-gold/40 bg-noviq-card px-4 py-3 text-sm font-semibold text-noviq-gold" role="alert">{error}</p>;
+  if (!data) return <p className="rounded-md border border-dashed border-noviq-border bg-noviq-card p-6 text-center text-sm text-noviq-muted">جاري تحميل لوحة التحكم...</p>;
+
+  const cards = [
+    ['مبيعات اليوم', formatCurrency(data.kpis.salesToday)],
+    ['طلبات اليوم', data.kpis.ordersToday],
+    ['طلبات جديدة ومؤكدة', data.kpis.pendingOrders],
+    ['مخزون منخفض', data.kpis.lowStockProducts],
+    ['زوار اليوم', data.kpis.visitorsToday],
+  ];
+
   return (
     <section className="grid min-w-0 gap-6" data-admin-dashboard>
-      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold text-noviq-gold">NOVIQ ADMIN</p>
-          <h2 className="mt-2 font-heading text-2xl font-bold text-noviq-text sm:text-3xl">
-            لوحة التحكم
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-noviq-secondaryText">
-            نظرة سريعة على أداء متجر NOVIQ
-          </p>
-        </div>
-
-        <div
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-noviq-border bg-noviq-card px-4 text-sm font-semibold text-noviq-secondaryText sm:w-fit"
-          data-dashboard-date
-        >
-          <CalendarDays size={18} strokeWidth={1.8} />
-          <span>{arabicToday}</span>
-        </div>
+      <div><p className="text-xs font-semibold text-noviq-gold">NOVIQ ADMIN</p><h2 className="mt-2 font-heading text-2xl font-bold text-noviq-text sm:text-3xl">لوحة التحكم</h2><p className="mt-3 text-sm leading-7 text-noviq-secondaryText">نظرة سريعة على أداء متجر NOVIQ</p></div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {cards.map(([label, value]) => <article className="rounded-md border border-noviq-border bg-noviq-card p-4" key={String(label)}><p className="text-sm text-noviq-secondaryText">{label}</p><p className="mt-3 text-2xl font-bold text-noviq-text">{value}</p></article>)}
       </div>
-
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4" data-dashboard-kpi-grid>
-        {dashboardKpis.map((kpi, index) => (
-          <DashboardStatCard
-            hint={kpi.hint}
-            icon={kpiIcons[index]}
-            key={kpi.id}
-            label={kpi.label}
-            value={kpi.value}
-          />
-        ))}
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="rounded-md border border-noviq-border bg-noviq-card p-5"><h3 className="text-lg font-bold text-noviq-text">المبيعات آخر 7 أيام</h3><div className="mt-5 grid grid-cols-7 items-end gap-2" style={{ minHeight: 180 }}>{data.salesTrend.map((point) => <div className="grid gap-2 text-center" key={point.label}><div className="rounded-t bg-noviq-gold" style={{ height: `${Math.max(8, point.value / 100)}px` }} /><span className="text-[10px] text-noviq-muted">{point.label}</span></div>)}</div></section>
+        <section className="rounded-md border border-noviq-border bg-noviq-card p-5"><h3 className="text-lg font-bold text-noviq-text">أحدث الطلبات</h3><div className="mt-4 grid gap-3">{data.recentOrders.map((order) => <div className="flex items-center justify-between gap-3 border-b border-noviq-border pb-2 text-sm" key={order.id}><span className="truncate text-noviq-secondaryText">{order.customerName} · {order.status}</span><strong className="text-noviq-gold">{formatCurrency(order.total)}</strong></div>)}</div></section>
       </div>
-
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5" data-dashboard-order-metrics>
-        {orderMetrics.map((metric, index) => (
-          <OrderMetricCard
-            hint={metric.hint}
-            icon={metricIcons[index]}
-            key={metric.id}
-            label={metric.label}
-            value={metric.value}
-          />
-        ))}
-      </div>
-
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.95fr)]">
-        <SalesChart points={salesTrend} />
-        <RecentOrders orders={recentOrders} />
-      </div>
-
-      <div className="grid min-w-0 gap-6 xl:grid-cols-2">
-        <TopProducts products={topSellingProducts} />
-        <LowStockList products={lowStockProducts} />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <section className="rounded-md border border-noviq-border bg-noviq-card p-5"><h3 className="text-lg font-bold text-noviq-text">الأكثر مبيعاً</h3><div className="mt-4 grid gap-3">{data.topProducts.map((product) => <div className="flex items-center justify-between gap-3 border-b border-noviq-border pb-2 text-sm" key={product.id}><span className="truncate text-noviq-secondaryText">{product.name}</span><strong className="text-noviq-gold">{product.unitsSold} قطعة</strong></div>)}</div></section>
+        <section className="rounded-md border border-noviq-border bg-noviq-card p-5"><h3 className="text-lg font-bold text-noviq-text">المخزون المنخفض</h3><div className="mt-4 grid gap-3">{data.lowStock.map((product) => <div className="flex items-center justify-between gap-3 border-b border-noviq-border pb-2 text-sm" key={product.id}><span className="truncate text-noviq-secondaryText">{product.name}</span><strong className="text-noviq-gold">{product.stock}</strong></div>)}</div></section>
       </div>
     </section>
   );

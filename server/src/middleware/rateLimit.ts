@@ -33,3 +33,13 @@ export const uploadRateLimiter = rateLimit({
   standardHeaders: true,
   windowMs: env.NODE_ENV === 'test' ? 60_000 : 15 * 60_000,
 });
+
+export const analyticsRateLimiter = rateLimit({
+  handler: (_request, response) => {
+    response.status(429).json(createErrorPayload('Analytics rate limit exceeded.'));
+  },
+  legacyHeaders: false,
+  max: env.NODE_ENV === 'test' ? 100 : 240,
+  standardHeaders: true,
+  windowMs: 15 * 60_000,
+});

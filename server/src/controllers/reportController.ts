@@ -2,6 +2,7 @@ import { CategoryModel } from '../models/Category.js';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
 import { ORDER_STATUSES, type Order } from '../types/models.js';
+import { LOW_STOCK_THRESHOLD } from '../utils/inventory.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type { AdminReportQuery } from '../validators/reportValidators.js';
@@ -59,7 +60,7 @@ export const getAdminReportSummary = asyncHandler(async (request, response) => {
       }, 0),
     0,
   );
-  const lowStockProducts = products.filter((product) => product.stock > 0 && product.stock <= 3).length;
+  const lowStockProducts = products.filter((product) => product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD).length;
   const outOfStockProducts = products.filter((product) => product.stock === 0).length;
   const productSales = new Map<
     string,
