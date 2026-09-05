@@ -3,7 +3,7 @@ import HomeProductCard from './HomeProductCard';
 
 export default function SelectedWatches() {
   const { products } = useStoreCatalog();
-  const selectedProducts = products.filter((product) => product.isAvailable).slice(0, 4);
+  const selectedProducts = products.filter((product) => product.isAvailable);
 
   return (
     <section id="selected-watches" className="bg-noviq-black pt-2 pb-10 lg:pt-4 lg:pb-14">
