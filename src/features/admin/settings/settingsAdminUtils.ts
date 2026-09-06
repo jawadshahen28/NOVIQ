@@ -35,12 +35,16 @@ function hasValidImagePath(value: string) {
     return false;
   }
 
-  return (
-    trimmed.startsWith('/') ||
-    trimmed.startsWith('./') ||
-    trimmed.startsWith('../') ||
-    /^https?:\/\//i.test(trimmed)
-  );
+  if (trimmed.startsWith('/')) {
+    return !trimmed.startsWith('//');
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 export function normalizeAdminSettings(values: AdminSettingsFormValues): AdminSettings {

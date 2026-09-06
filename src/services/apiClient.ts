@@ -8,7 +8,7 @@ const apiBaseUrl = configuredApiBaseUrl.endsWith('/api')
   : `${configuredApiBaseUrl}/api`;
 const serverUnavailableMessage = 'تعذر الاتصال بالخادم';
 
-interface ApiErrorDetail {
+export interface ApiErrorDetail {
   message: string;
   code?: string;
   path?: string;

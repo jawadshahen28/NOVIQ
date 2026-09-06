@@ -1,6 +1,8 @@
 import mongoose, { Types } from 'mongoose';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
+import { DEFAULT_STORE_SETTINGS } from '../config/storeSettings.js';
+import { getStoreSettingsDocument } from './settingsController.js';
 import type { Order, Product } from '../types/models.js';
 import { AppError } from '../utils/AppError.js';
 import { sendSuccess } from '../utils/apiResponse.js';
@@ -73,6 +75,19 @@ function createOrderItem(product: Product & { _id: Types.ObjectId }, quantity: n
 
 export const createOrder = asyncHandler(async (request, response) => {
   const body = request.body as CreateOrderBody;
+  const settings = await getStoreSettingsDocument();
+
+  if (!settings.ordersOpen) {
+    const message = settings.closedMessage || DEFAULT_STORE_SETTINGS.closedMessage;
+    throw new AppError(message, 409, [
+      {
+        code: 'orders_closed',
+        message,
+        path: 'ordersOpen',
+      },
+    ]);
+  }
+
   const normalizedItems = normalizeOrderItems(body.items);
   const session = await mongoose.startSession();
   let createdOrder: mongoose.HydratedDocument<Order> | null = null;

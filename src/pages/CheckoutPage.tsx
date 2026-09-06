@@ -5,6 +5,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { useCart } from '../features/cart/CartContext';
 import CheckoutSummary from '../features/checkout/components/CheckoutSummary';
+import { useStoreSettings } from '../features/store/settings/StoreSettingsContext';
+import { defaultStoreSettings } from '../features/store/settings/storeSettingsDefaults';
 import { ApiClientError } from '../services/apiClient';
 import { createOrder, type CreatedOrder } from '../services/orderApi';
 import { saveSubmittedOrderSnapshot } from '../services/submittedOrderStorage';
@@ -53,6 +55,7 @@ function createSubmittedOrderSnapshot(order: CreatedOrder): SubmittedOrderSnapsh
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { clearCart, items, subtotal } = useCart();
+  const { settings } = useStoreSettings();
   const [formValues, setFormValues] = useState<CheckoutFormValues>(initialFormValues);
   const [errors, setErrors] = useState<CheckoutErrors>({});
   const [submitError, setSubmitError] = useState('');
@@ -97,6 +100,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!settings.ordersOpen) {
+      setSubmitError(settings.closedMessage || defaultStoreSettings.closedMessage);
+      return;
+    }
+
     const nextErrors = validateForm(formValues);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -134,7 +142,10 @@ export default function CheckoutPage() {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
       setSubmitError(
-        error instanceof ApiClientError && error.status === 409
+        error instanceof ApiClientError &&
+          error.errors?.some((detail) => detail.code === 'orders_closed')
+          ? error.message || defaultStoreSettings.closedMessage
+          : error instanceof ApiClientError && error.status === 409
           ? 'الكمية المطلوبة غير متوفرة لأحد المنتجات.'
           : error instanceof ApiClientError && error.status === 400
             ? 'يرجى مراجعة بيانات الطلب والمحاولة مرة أخرى.'
@@ -178,6 +189,15 @@ export default function CheckoutPage() {
           <p className="mt-3 text-sm text-noviq-secondaryText">
             إجمالي الطلب الحالي {formatCurrency(subtotal)}
           </p>
+          {!settings.ordersOpen ? (
+            <p
+              className="mt-4 rounded-md border border-noviq-gold/50 bg-noviq-card px-4 py-3 text-sm font-semibold leading-7 text-noviq-gold"
+              role="alert"
+              data-checkout-closed-message
+            >
+              {settings.closedMessage || defaultStoreSettings.closedMessage}
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
@@ -287,7 +307,7 @@ export default function CheckoutPage() {
 
             <Button
               className="min-h-12 w-full md:w-auto"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !settings.ordersOpen}
               data-confirm-order
               icon={<CheckCircle2 size={18} />}
               type="submit"

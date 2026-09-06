@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getPublicCategory, listPublicCategories } from '../controllers/categoryController.js';
 import { getPublicProduct, listPublicProducts } from '../controllers/productController.js';
+import { getPublicStoreSettings } from '../controllers/settingsController.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 import {
   publicProductListQuerySchema,
@@ -9,6 +10,7 @@ import {
 
 const storefrontRouter = Router();
 
+storefrontRouter.get('/settings', getPublicStoreSettings);
 storefrontRouter.get('/categories', listPublicCategories);
 storefrontRouter.get('/categories/:slug', validateRequest({ params: slugParamsSchema }), getPublicCategory);
 storefrontRouter.get(

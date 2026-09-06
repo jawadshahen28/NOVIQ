@@ -1,7 +1,33 @@
 import { ArrowLeft } from 'lucide-react';
-import heroWatch from '../../../assets/noviq-reference-hero.png';
+import { useStoreSettings } from '../settings/StoreSettingsContext';
+import { defaultStoreSettings } from '../settings/storeSettingsDefaults';
+
+function splitHeroTitle(title: string) {
+  const explicitLines = title
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (explicitLines.length > 1) {
+    return [explicitLines[0], explicitLines.slice(1).join(' ')] as const;
+  }
+
+  const words = title.trim().split(/\s+/).filter(Boolean);
+
+  if (words.length <= 2) {
+    return [title, ''] as const;
+  }
+
+  return [words.slice(0, -1).join(' '), words[words.length - 1]] as const;
+}
 
 export default function HeroSection() {
+  const { settings } = useStoreSettings();
+  const heroTitle = settings.heroTitle || defaultStoreSettings.heroTitle;
+  const heroDescription = settings.heroDescription || defaultStoreSettings.heroDescription;
+  const heroImage = settings.heroImage || defaultStoreSettings.heroImage;
+  const [heroTitleLead, heroTitleAccent] = splitHeroTitle(heroTitle);
+
   return (
     <section className="overflow-hidden border-b border-noviq-border bg-noviq-black">
       <div
@@ -9,9 +35,15 @@ export default function HeroSection() {
       >
         <div className="hero-image-reveal absolute inset-0 z-0 overflow-hidden bg-noviq-pure lg:relative lg:inset-auto lg:order-1 lg:min-h-[600px]">
           <img
-            src={heroWatch}
-            alt="ساعة NOVIQ فاخرة باللون الأسود والذهبي"
+            src={heroImage}
+            alt={`ساعة ${settings.storeName || defaultStoreSettings.storeName} فاخرة`}
             className="h-full w-full object-cover object-[41%_center] lg:object-[39%_center]"
+            onError={(event) => {
+              if (!event.currentTarget.dataset.fallbackApplied) {
+                event.currentTarget.dataset.fallbackApplied = 'true';
+                event.currentTarget.src = defaultStoreSettings.heroImage;
+              }
+            }}
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-noviq-black via-noviq-black/70 to-transparent lg:hidden" />
           <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-noviq-black to-transparent lg:left-auto lg:right-0 lg:w-24 lg:bg-gradient-to-l" />
@@ -26,13 +58,14 @@ export default function HeroSection() {
               className="font-heading text-[clamp(36px,10.6vw,42px)] font-semibold leading-[1.18] text-noviq-text sm:text-[52px] lg:text-[64px] lg:leading-[1.15]"
               data-home-hero-title
             >
-              <span className="block whitespace-nowrap">ساعة تليق</span>
-              <span className="block text-noviq-gold">بحضورك.</span>
+              <span className="block">{heroTitleLead}</span>
+              {heroTitleAccent ? (
+                <span className="block text-noviq-gold">{heroTitleAccent}</span>
+              ) : null}
             </h1>
 
             <p className="mx-auto mt-5 max-w-[520px] text-[15px] leading-[1.85] text-noviq-secondaryText min-[390px]:text-base sm:text-[17px] lg:mx-0 lg:mt-6">
-              اكتشف مجموعة مختارة من الساعات التي تجمع بين الأناقة، الجودة
-              والتفاصيل التي تصنع الفرق.
+              {heroDescription}
             </p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3 lg:mt-8 lg:justify-start">

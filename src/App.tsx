@@ -4,6 +4,7 @@ import { AdminAuthProvider } from './features/admin/auth/AdminAuthContext';
 import ProtectedAdminRoute from './features/admin/auth/ProtectedAdminRoute';
 import { CartProvider } from './features/cart/CartContext';
 import { StoreCatalogProvider } from './features/store/catalog/StoreCatalogContext';
+import { StoreSettingsProvider } from './features/store/settings/StoreSettingsContext';
 import AdminLayout from './layouts/AdminLayout';
 import StoreLayout from './layouts/StoreLayout';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
@@ -38,8 +39,9 @@ function StorefrontAnalyticsTracker() {
 
 export default function App() {
   return (
-    <StoreCatalogProvider>
-      <CartProvider>
+    <StoreSettingsProvider>
+      <StoreCatalogProvider>
+        <CartProvider>
         <AdminAuthProvider>
           <BrowserRouter>
           <StorefrontAnalyticsTracker />
@@ -74,7 +76,8 @@ export default function App() {
           </Routes>
           </BrowserRouter>
         </AdminAuthProvider>
-      </CartProvider>
-    </StoreCatalogProvider>
+        </CartProvider>
+      </StoreCatalogProvider>
+    </StoreSettingsProvider>
   );
 }

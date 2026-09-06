@@ -4,6 +4,8 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { useCart } from '../features/cart/CartContext';
 import FloatingWhatsApp from '../features/store/components/FloatingWhatsApp';
+import { useStoreSettings } from '../features/store/settings/StoreSettingsContext';
+import { defaultStoreSettings } from '../features/store/settings/storeSettingsDefaults';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `relative flex h-[72px] items-center text-[13px] font-medium transition duration-200 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:-translate-x-1/2 after:bg-noviq-gold after:transition-all after:duration-200 ${
@@ -19,6 +21,8 @@ export default function StoreLayout() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const { itemCount } = useCart();
+  const { settings } = useStoreSettings();
+  const storeName = settings.storeName || defaultStoreSettings.storeName;
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -45,7 +49,7 @@ export default function StoreLayout() {
         data-store-header
       >
         <div className="luxury-container relative flex h-16 items-center justify-between gap-4 lg:h-[72px]">
-          <Logo />
+          <Logo label={storeName} />
 
           <nav
             className="absolute left-1/2 top-0 hidden -translate-x-1/2 items-center justify-center gap-9 lg:flex"
@@ -149,9 +153,11 @@ export default function StoreLayout() {
 
       <footer id="contact" className="border-t border-noviq-border bg-noviq-pure">
         <div className="luxury-container flex min-h-24 flex-col items-center justify-center gap-4 py-7 text-center sm:flex-row sm:justify-between sm:text-right">
-          <p className="font-brand text-2xl text-noviq-gold">NOVIQ</p>
+          <p className="max-w-full truncate font-brand text-2xl text-noviq-gold" title={storeName}>
+            {storeName}
+          </p>
           <p className="text-xs text-noviq-muted">
-            جميع الحقوق محفوظة NOVIQ © 2026
+            جميع الحقوق محفوظة {storeName} © 2026
           </p>
           <div className="flex items-center gap-3">
             <a

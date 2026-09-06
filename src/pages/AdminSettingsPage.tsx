@@ -1,11 +1,12 @@
 import {
   Image,
   MessageCircle,
+  RefreshCcw,
   Save,
   ShoppingBag,
   Store,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import Button from '../components/Button';
 import {
@@ -19,6 +20,7 @@ import {
   type AdminSettingsFormErrors,
   type AdminSettingsFormValues,
 } from '../features/admin/settings/settingsAdminUtils';
+import { ApiClientError } from '../services/apiClient';
 
 interface SettingsSectionProps {
   children: ReactNode;
@@ -59,11 +61,40 @@ function getFieldErrorId(field: keyof AdminSettingsFormErrors) {
   return `settings-${field}-error`;
 }
 
+const serverValidationMessage = 'تعذر حفظ الإعدادات. يرجى مراجعة الحقول والمحاولة مرة أخرى.';
+const serverSaveErrorMessage = 'تعذر حفظ الإعدادات، يرجى المحاولة مرة أخرى.';
+
+const serverErrorFields = [
+  'storeName',
+  'whatsappNumber',
+  'storePhone',
+  'heroTitle',
+  'heroImage',
+] as const;
+
+function isServerErrorField(path: string): path is keyof AdminSettingsFormErrors {
+  return serverErrorFields.some((field) => field === path);
+}
+
+function getServerFieldErrors(error: ApiClientError) {
+  const nextErrors: AdminSettingsFormErrors = {};
+
+  error.errors?.forEach((detail) => {
+    if (detail.path && isServerErrorField(detail.path)) {
+      nextErrors[detail.path] = serverValidationMessage;
+    }
+  });
+
+  return nextErrors;
+}
+
 export default function AdminSettingsPage() {
-  const { saveSettings, settings } = useAdminSettings();
+  const { isLoading, loadError, reloadSettings, saveSettings, settings } = useAdminSettings();
   const [values, setValues] = useState<AdminSettingsFormValues>(settings);
   const [errors, setErrors] = useState<AdminSettingsFormErrors>({});
   const [feedback, setFeedback] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const isSavingRef = useRef(false);
 
   useEffect(() => {
     setValues(settings);
@@ -85,8 +116,12 @@ export default function AdminSettingsPage() {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isSavingRef.current || isLoading || loadError) {
+      return;
+    }
 
     const nextErrors = validateAdminSettings(values);
 
@@ -96,9 +131,30 @@ export default function AdminSettingsPage() {
       return;
     }
 
-    saveSettings(normalizeAdminSettings(values));
-    setErrors({});
-    setFeedback('تم حفظ الإعدادات');
+    isSavingRef.current = true;
+    setIsSaving(true);
+
+    try {
+      const savedSettings = await saveSettings(normalizeAdminSettings(values));
+      setValues(savedSettings);
+      setErrors({});
+      setFeedback('تم حفظ الإعدادات');
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        const serverErrors = getServerFieldErrors(error);
+
+        if (Object.keys(serverErrors).length > 0) {
+          setErrors(serverErrors);
+          setFeedback(serverValidationMessage);
+          return;
+        }
+      }
+
+      setFeedback(serverSaveErrorMessage);
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -114,6 +170,34 @@ export default function AdminSettingsPage() {
           </p>
         </div>
       </div>
+
+      {isLoading ? (
+        <p
+          className="rounded-md border border-noviq-border bg-noviq-card px-4 py-3 text-sm font-semibold text-noviq-secondaryText"
+          data-settings-loading
+          role="status"
+        >
+          جاري تحميل الإعدادات...
+        </p>
+      ) : null}
+
+      {loadError ? (
+        <div
+          className="flex flex-col gap-3 rounded-md border border-noviq-gold/50 bg-noviq-card px-4 py-3 text-sm font-semibold text-noviq-gold sm:flex-row sm:items-center sm:justify-between"
+          data-settings-load-error
+          role="alert"
+        >
+          <p>{loadError}</p>
+          <Button
+            icon={<RefreshCcw size={17} strokeWidth={1.8} />}
+            onClick={() => void reloadSettings()}
+            type="button"
+            variant="outline"
+          >
+            إعادة المحاولة
+          </Button>
+        </div>
+      ) : null}
 
       {feedback ? (
         <p
@@ -367,11 +451,12 @@ export default function AdminSettingsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Button
             className="w-full sm:w-auto"
+            disabled={isSaving || isLoading || Boolean(loadError)}
             data-settings-save
             icon={<Save size={18} strokeWidth={1.8} />}
             type="submit"
           >
-            حفظ التغييرات
+            {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
           </Button>
         </div>
       </form>

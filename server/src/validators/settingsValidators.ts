@@ -16,7 +16,20 @@ function hasValidImagePath(value: string) {
     return true;
   }
 
-  return !/\s/.test(trimmed) && (trimmed.startsWith('/') || /^https?:\/\//i.test(trimmed));
+  if (/\s/.test(trimmed)) {
+    return false;
+  }
+
+  if (trimmed.startsWith('/')) {
+    return !trimmed.startsWith('//');
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 export const updateStoreSettingsBodySchema = z
@@ -46,6 +59,7 @@ export const updateStoreSettingsBodySchema = z
       .refine(hasValidPhoneShape, 'WhatsApp number is invalid')
       .optional(),
   })
+  .strict()
   .refine((value) => Object.keys(value).length > 0, 'At least one settings field is required');
 
 export type UpdateStoreSettingsBody = z.infer<typeof updateStoreSettingsBodySchema>;

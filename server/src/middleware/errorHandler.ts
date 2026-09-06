@@ -16,12 +16,25 @@ interface DuplicateKeyError {
   keyValue?: Record<string, unknown>;
 }
 
+interface JsonParseError extends SyntaxError {
+  status?: number;
+  type?: string;
+}
+
 function isDuplicateKeyError(error: unknown): error is DuplicateKeyError {
   return (
     typeof error === 'object' &&
     error !== null &&
     'code' in error &&
     (error as { code?: unknown }).code === 11000
+  );
+}
+
+function isJsonParseError(error: unknown): error is JsonParseError {
+  return (
+    error instanceof SyntaxError &&
+    (error as JsonParseError).status === 400 &&
+    (error as JsonParseError).type === 'entity.parse.failed'
   );
 }
 
@@ -86,6 +99,20 @@ function normalizeError(error: unknown): NormalizedError {
       errors: createDuplicateKeyErrors(error),
       message: 'Duplicate value violates a unique constraint',
       statusCode: 409,
+    };
+  }
+
+  if (isJsonParseError(error)) {
+    return {
+      errors: [
+        {
+          code: 'invalid_json',
+          message: 'Request body must be valid JSON',
+          path: 'body',
+        },
+      ],
+      message: 'Request body must be valid JSON',
+      statusCode: 400,
     };
   }
 
