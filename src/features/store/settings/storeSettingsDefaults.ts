@@ -1,4 +1,4 @@
-import heroImage from '../../../assets/noviq-reference-hero.png';
+import heroImage from '../../../assets/noviq-reference-hero-lcp.jpg';
 
 export interface StoreSettings {
   storeName: string;

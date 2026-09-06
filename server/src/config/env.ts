@@ -39,60 +39,70 @@ function requiredTrimmedString(name: string) {
   }, z.string().min(1, `${name} is required`));
 }
 
-const environmentSchema = z.object({
-  NODE_ENV: z
-    .preprocess(
-      (value) => (typeof value === 'string' && value.trim() ? value.trim() : 'development'),
-      z.enum(['development', 'test', 'production']),
-    )
-    .default('development'),
-  PORT: z
-    .preprocess(
-      (value) => (typeof value === 'string' && value.trim() ? value.trim() : 5010),
-      z.coerce.number().int().min(1).max(65535),
-    )
-    .default(5010),
-  MONGODB_URI: requiredTrimmedString('MONGODB_URI'),
-  CLIENT_URL: optionalTrimmedUrl(),
-  JWT_SECRET: requiredTrimmedString('JWT_SECRET').refine(
-    (value) => value.length >= 32,
-    'JWT_SECRET must be at least 32 characters long',
-  ),
-  JWT_EXPIRES_IN: z
-    .preprocess(
-      (value) => (typeof value === 'string' && value.trim() ? value.trim() : '7d'),
-      z
-        .string()
-        .regex(/^\d+[smhd]$/, 'JWT_EXPIRES_IN must use a value like 15m, 12h, or 7d'),
-    )
-    .default('7d'),
-  AUTH_COOKIE_NAME: z
-    .preprocess(
-      (value) =>
-        typeof value === 'string' && value.trim() ? value.trim() : 'noviq_admin_session',
-      z
-        .string()
-        .regex(
-          /^[A-Za-z0-9_]+$/,
-          'AUTH_COOKIE_NAME may only contain letters, numbers, and underscores',
-        ),
-    )
-    .default('noviq_admin_session'),
-  CLOUDINARY_API_KEY: optionalTrimmedString(),
-  CLOUDINARY_API_SECRET: optionalTrimmedString(),
-  CLOUDINARY_CLOUD_NAME: optionalTrimmedString(),
-  CLOUDINARY_UPLOAD_FOLDER: z
-    .preprocess(
-      (value) => (typeof value === 'string' && value.trim() ? value.trim() : 'noviq'),
-      z
-        .string()
-        .regex(
-          /^[A-Za-z0-9/_-]+$/,
-          'CLOUDINARY_UPLOAD_FOLDER may only contain letters, numbers, slashes, underscores, and hyphens',
-        ),
-    )
-    .default('noviq'),
-});
+const environmentSchema = z
+  .object({
+    NODE_ENV: z
+      .preprocess(
+        (value) => (typeof value === 'string' && value.trim() ? value.trim() : 'development'),
+        z.enum(['development', 'test', 'production']),
+      )
+      .default('development'),
+    PORT: z
+      .preprocess(
+        (value) => (typeof value === 'string' && value.trim() ? value.trim() : 5010),
+        z.coerce.number().int().min(1).max(65535),
+      )
+      .default(5010),
+    MONGODB_URI: requiredTrimmedString('MONGODB_URI'),
+    CLIENT_URL: optionalTrimmedUrl(),
+    JWT_SECRET: requiredTrimmedString('JWT_SECRET').refine(
+      (value) => value.length >= 32,
+      'JWT_SECRET must be at least 32 characters long',
+    ),
+    JWT_EXPIRES_IN: z
+      .preprocess(
+        (value) => (typeof value === 'string' && value.trim() ? value.trim() : '7d'),
+        z
+          .string()
+          .regex(/^\d+[smhd]$/, 'JWT_EXPIRES_IN must use a value like 15m, 12h, or 7d'),
+      )
+      .default('7d'),
+    AUTH_COOKIE_NAME: z
+      .preprocess(
+        (value) =>
+          typeof value === 'string' && value.trim() ? value.trim() : 'noviq_admin_session',
+        z
+          .string()
+          .regex(
+            /^[A-Za-z0-9_]+$/,
+            'AUTH_COOKIE_NAME may only contain letters, numbers, and underscores',
+          ),
+      )
+      .default('noviq_admin_session'),
+    CLOUDINARY_API_KEY: optionalTrimmedString(),
+    CLOUDINARY_API_SECRET: optionalTrimmedString(),
+    CLOUDINARY_CLOUD_NAME: optionalTrimmedString(),
+    CLOUDINARY_UPLOAD_FOLDER: z
+      .preprocess(
+        (value) => (typeof value === 'string' && value.trim() ? value.trim() : 'noviq'),
+        z
+          .string()
+          .regex(
+            /^[A-Za-z0-9/_-]+$/,
+            'CLOUDINARY_UPLOAD_FOLDER may only contain letters, numbers, slashes, underscores, and hyphens',
+          ),
+      )
+      .default('noviq'),
+  })
+  .superRefine((value, context) => {
+    if (value.NODE_ENV === 'production' && !value.CLIENT_URL) {
+      context.addIssue({
+        code: 'custom',
+        message: 'CLIENT_URL is required in production for credentialed CORS',
+        path: ['CLIENT_URL'],
+      });
+    }
+  });
 
 const parsedEnvironment = environmentSchema.safeParse(process.env);
 

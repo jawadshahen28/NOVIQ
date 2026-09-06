@@ -11,6 +11,7 @@ const orderItemSchema = z
     productSlug: slugSchema.optional(),
     quantity: z.coerce.number().int().min(1).max(99),
   })
+  .strict()
   .refine((value) => value.productId || value.productSlug, {
     message: 'Order item productId or productSlug is required',
     path: ['productId'],
@@ -22,14 +23,16 @@ const phoneSchema = requiredTextSchema('Customer phone', 40).refine(
 );
 
 export const createOrderBodySchema = z.object({
-  customer: z.object({
-    address: requiredTextSchema('Customer address', 500),
-    name: requiredTextSchema('Customer name', 120),
-    notes: z.string().trim().max(1_000).optional(),
-    phone: phoneSchema,
-  }),
+  customer: z
+    .object({
+      address: requiredTextSchema('Customer address', 500),
+      name: requiredTextSchema('Customer name', 120),
+      notes: z.string().trim().max(1_000).optional(),
+      phone: phoneSchema,
+    })
+    .strict(),
   items: z.array(orderItemSchema).min(1).max(50),
-});
+}).strict();
 
 export const adminOrderListQuerySchema = paginationQuerySchema.extend({
   search: z.string().trim().max(100).optional(),
@@ -38,7 +41,7 @@ export const adminOrderListQuerySchema = paginationQuerySchema.extend({
 
 export const updateOrderStatusBodySchema = z.object({
   status: z.enum(ORDER_STATUSES),
-});
+}).strict();
 
 export type AdminOrderListQuery = z.infer<typeof adminOrderListQuerySchema>;
 export type CreateOrderBody = z.infer<typeof createOrderBodySchema>;

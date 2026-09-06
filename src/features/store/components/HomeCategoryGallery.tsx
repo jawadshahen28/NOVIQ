@@ -63,6 +63,7 @@ export default function HomeCategoryGallery() {
                   alt={category.name}
                   className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
                   style={{ objectPosition: imagePositions[category.slug] }}
+                  decoding="async"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-noviq-black opacity-45" />

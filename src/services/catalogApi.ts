@@ -62,6 +62,16 @@ export function getProduct(slug: string) {
   return apiRequest<ProductResponse>(`/products/${encodeURIComponent(slug)}`);
 }
 
+function toCategoryPayload(category: Partial<Category>) {
+  return {
+    description: category.description,
+    featuredCopy: category.featuredCopy,
+    image: category.image,
+    name: category.name,
+    slug: category.slug,
+  };
+}
+
 export async function listAllAdminProducts() {
   const limit = 100;
   const firstPage = await listProducts({ admin: true, limit, page: 1 });
@@ -87,14 +97,14 @@ export async function listAllAdminProducts() {
 export function createCategory(category: Omit<Category, 'id'>) {
   return apiRequest<CategoryResponse>('/admin/categories', {
     method: 'POST',
-    body: JSON.stringify(category),
+    body: JSON.stringify(toCategoryPayload(category)),
   });
 }
 
 export function updateCategory(id: string, category: Partial<Omit<Category, 'id'>>) {
   return apiRequest<CategoryResponse>(`/admin/categories/${id}`, {
     method: 'PATCH',
-    body: JSON.stringify(category),
+    body: JSON.stringify(toCategoryPayload(category)),
   });
 }
 

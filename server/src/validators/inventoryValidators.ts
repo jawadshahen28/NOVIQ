@@ -8,6 +8,6 @@ export const inventoryProductParamsSchema = z.object({ id: mongoObjectIdSchema }
 export const updateInventoryStockBodySchema = z.object({
   expectedStock: stockSchema,
   stock: stockSchema,
-});
+}).strict();
 
 export type UpdateInventoryStockBody = z.infer<typeof updateInventoryStockBodySchema>;

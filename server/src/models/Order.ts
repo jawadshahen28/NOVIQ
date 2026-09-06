@@ -24,9 +24,6 @@ const customerSchema = new Schema(
       trim: true,
       type: String,
     },
-    stockRestoredAt: {
-      type: Date,
-    },
   },
   {
     _id: false,
@@ -118,6 +115,9 @@ const orderSchema = new Schema<Order>(
       enum: ORDER_STATUSES,
       required: true,
       type: String,
+    },
+    stockRestoredAt: {
+      type: Date,
     },
     subtotal: {
       min: [0, 'Subtotal must be greater than or equal to 0'],

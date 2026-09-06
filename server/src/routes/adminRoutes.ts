@@ -12,6 +12,7 @@ import {
   updateProduct,
 } from '../controllers/productController.js';
 import { requireAdminAuth } from '../middleware/requireAdminAuth.js';
+import { requireTrustedOrigin } from '../middleware/requireTrustedOrigin.js';
 import { uploadRateLimiter } from '../middleware/rateLimit.js';
 import { uploadImageFile } from '../middleware/uploadMiddleware.js';
 import { validateRequest } from '../middleware/validateRequest.js';
@@ -53,6 +54,7 @@ import { updateStoreSettingsBodySchema } from '../validators/settingsValidators.
 const adminRouter = Router();
 
 adminRouter.use(requireAdminAuth);
+adminRouter.use(requireTrustedOrigin);
 
 adminRouter.get('/dashboard', getAdminDashboard);
 adminRouter.get('/reports', validateRequest({ query: adminReportQuerySchema }), getAdminReportSummary);

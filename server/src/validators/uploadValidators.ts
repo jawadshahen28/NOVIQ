@@ -21,6 +21,6 @@ export const imageUploadBodySchema = z.object({
       'Folder may only contain letters, numbers, slashes, underscores, and hyphens',
     )
     .optional(),
-});
+}).strict();
 
 export type ImageUploadBody = z.infer<typeof imageUploadBodySchema>;

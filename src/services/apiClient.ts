@@ -1,11 +1,14 @@
 const defaultApiBaseUrl = 'http://localhost:5010';
-const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL?.trim() || defaultApiBaseUrl).replace(
-  /\/+$/,
-  '',
-);
-const apiBaseUrl = configuredApiBaseUrl.endsWith('/api')
-  ? configuredApiBaseUrl
-  : `${configuredApiBaseUrl}/api`;
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+
+if (import.meta.env.PROD && !configuredApiBaseUrl) {
+  throw new Error('VITE_API_BASE_URL is required for production builds');
+}
+
+const normalizedApiBaseUrl = (configuredApiBaseUrl || defaultApiBaseUrl).replace(/\/+$/, '');
+const apiBaseUrl = normalizedApiBaseUrl.endsWith('/api')
+  ? normalizedApiBaseUrl
+  : `${normalizedApiBaseUrl}/api`;
 const serverUnavailableMessage = 'تعذر الاتصال بالخادم';
 
 export interface ApiErrorDetail {

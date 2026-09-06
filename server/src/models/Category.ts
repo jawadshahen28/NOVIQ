@@ -43,6 +43,6 @@ const categorySchema = new Schema<Category>(
 );
 
 categorySchema.index({ slug: 1 }, { unique: true });
-categorySchema.index({ isActive: 1 });
+categorySchema.index({ isActive: 1, name: 1 });
 
 export const CategoryModel = model<Category>('Category', categorySchema);

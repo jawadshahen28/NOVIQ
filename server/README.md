@@ -1,6 +1,6 @@
 # NOVIQ Backend
 
-Backend Prompt 1 establishes the NOVIQ API foundation only. It does not implement admin authentication, CRUD endpoints, Cloudinary uploads, or frontend API integration.
+The NOVIQ API provides the storefront catalog, checkout orders, admin authentication, admin CRUD, inventory, reports, analytics, settings, and Cloudinary-backed image uploads.
 
 ## Stack
 
@@ -46,16 +46,27 @@ Required to start the API:
 
 - `MONGODB_URI`
 - `JWT_SECRET`
+- `CLIENT_URL` when `NODE_ENV=production`
 
 Optional/defaulted:
 
 - `NODE_ENV` defaults to `development`
 - `PORT` defaults to `5010`
-- `CLIENT_URL` enables the approved frontend origin for CORS
+- `CLIENT_URL` enables the approved frontend origin for CORS and trusted-origin checks
 - `JWT_EXPIRES_IN` defaults to `7d`
 - `AUTH_COOKIE_NAME` defaults to `noviq_admin_session`
 
 Never commit real `.env` files or credentials.
+
+Production frontend builds also require `VITE_API_BASE_URL` at the project root so the deployed frontend never falls back to a localhost API.
+
+## Production Readiness
+
+- Set `NODE_ENV=production`, serve over HTTPS, and set `CLIENT_URL` to the exact deployed frontend origin.
+- In production, Express trusts the first proxy hop so secure cookies and rate-limit IP handling work correctly behind hosts such as Render, Fly, or a reverse proxy.
+- Production cookies use `httpOnly`, `secure: true`, and `sameSite: "none"` for cross-site frontend/backend deployments.
+- MongoDB `autoIndex` is disabled in production; ensure indexes are created during deployment or migration before relying on new query patterns.
+- `/api/health` is safe for health checks. Platform cold starts and database wake-up latency are infrastructure concerns; use an always-on instance, minimum instances, or an external uptime check if first-request latency has a strict SLA.
 
 ## Commands
 
@@ -125,8 +136,9 @@ Authentication uses a signed JWT stored in an HttpOnly cookie. The frontend send
 Cookie behavior:
 
 - `httpOnly: true`
-- `sameSite: "lax"`
-- `secure: false` in local HTTP development
+- `sameSite: "lax"` in local/test environments
+- `sameSite: "none"` in production
+- `secure: false` in local HTTP development/test
 - `secure: true` in production
 - cookie path: `/api`
 
@@ -170,7 +182,7 @@ Login is rate limited to 20 requests per 15 minutes in development/production. T
 
 ## Catalog API
 
-The persistent catalog API contains categories and products only. Checkout, orders, reports, settings, and uploads are reserved for later backend prompts.
+The persistent API contains categories, products, orders, inventory, settings, reports, analytics, and uploads.
 
 Public storefront endpoints:
 

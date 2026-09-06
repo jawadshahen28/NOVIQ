@@ -38,6 +38,11 @@ export default function HeroSection() {
             src={heroImage}
             alt={`ساعة ${settings.storeName || defaultStoreSettings.storeName} فاخرة`}
             className="h-full w-full object-cover object-[41%_center] lg:object-[39%_center]"
+            decoding="async"
+            fetchPriority="high"
+            height={853}
+            loading="eager"
+            width={1280}
             onError={(event) => {
               if (!event.currentTarget.dataset.fallbackApplied) {
                 event.currentTarget.dataset.fallbackApplied = 'true';

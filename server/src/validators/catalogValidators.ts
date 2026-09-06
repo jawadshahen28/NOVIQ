@@ -12,7 +12,8 @@ const optionalTextSchema = (max: number) => z.string().trim().max(max).optional(
 const requiredTextSchema = (field: string, max: number) =>
   z.string().trim().min(1, `${field} is required`).max(max);
 
-const nullableMoneySchema = z.union([z.coerce.number().min(0), z.null()]).optional();
+const moneySchema = z.coerce.number().min(0.01).max(1_000_000);
+const nullableMoneySchema = z.union([z.coerce.number().min(0).max(1_000_000), z.null()]).optional();
 const specificationsSchema = z.record(z.string().trim().min(1).max(80), z.string().trim().max(500));
 
 export const resourceIdParamsSchema = z.object({
@@ -35,7 +36,7 @@ export const createCategoryBodySchema = z.object({
   isActive: z.boolean().optional(),
   name: requiredTextSchema('Category name', 120),
   slug: slugSchema,
-});
+}).strict();
 
 export const updateCategoryBodySchema = createCategoryBodySchema.partial().refine(
   (value) => Object.keys(value).length > 0,
@@ -47,24 +48,24 @@ const productFieldsSchema = z.object({
   category: slugSchema.optional(),
   categoryId: mongoObjectIdSchema.optional(),
   compareAtPrice: nullableMoneySchema,
-  costPrice: z.coerce.number().min(0).optional(),
+  costPrice: z.coerce.number().min(0).max(1_000_000).optional(),
   description: requiredTextSchema('Product description', 4_000).optional(),
   images: z.array(imageReferenceSchema).min(1).max(12).optional(),
   isActive: z.boolean().optional(),
   isAvailable: z.boolean().optional(),
   name: requiredTextSchema('Product name', 160).optional(),
-  price: z.coerce.number().min(0.01).optional(),
+  price: moneySchema.optional(),
   primaryImage: imageReferenceSchema.optional(),
-  sellingPrice: z.coerce.number().min(0.01).optional(),
+  sellingPrice: moneySchema.optional(),
   shortDescription: optionalTextSchema(280),
   slug: slugSchema.optional(),
   specifications: specificationsSchema.optional(),
   stock: z.coerce.number().int().min(0).optional(),
-});
+}).strict();
 
 export const createProductBodySchema = productFieldsSchema
   .extend({
-    costPrice: z.coerce.number().min(0),
+    costPrice: z.coerce.number().min(0).max(1_000_000),
     description: requiredTextSchema('Product description', 4_000),
     images: z.array(imageReferenceSchema).min(1).max(12),
     name: requiredTextSchema('Product name', 160),
@@ -86,7 +87,7 @@ export const updateProductBodySchema = productFieldsSchema.refine(
 
 export const updateProductStockBodySchema = z.object({
   stock: z.coerce.number().int().min(0),
-});
+}).strict();
 
 export const publicProductListQuerySchema = z.object({
   category: slugSchema.optional(),

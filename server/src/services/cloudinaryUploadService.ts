@@ -81,8 +81,7 @@ export async function uploadImageToCloudinary(input: {
   const payload = (await response.json().catch(() => null)) as CloudinaryUploadResponse | null;
 
   if (!response.ok || !payload) {
-    const cloudinaryMessage = getOptionalString(payload?.error?.message);
-    throw new AppError(cloudinaryMessage ?? 'Cloudinary upload failed', 502);
+    throw new AppError('Cloudinary upload failed', 502);
   }
 
   const url = getOptionalString(payload.secure_url);

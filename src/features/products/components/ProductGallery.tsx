@@ -22,6 +22,9 @@ export default function ProductGallery({ product }: ProductGalleryProps) {
           src={selectedImage}
           alt={product.name}
           className="h-full w-full object-contain"
+          decoding="async"
+          fetchPriority="high"
+          loading="eager"
           data-product-main-image
         />
       </div>
@@ -45,6 +48,7 @@ export default function ProductGallery({ product }: ProductGalleryProps) {
               src={image}
               alt=""
               className="h-full w-full object-cover"
+              decoding="async"
               loading="lazy"
             />
           </button>

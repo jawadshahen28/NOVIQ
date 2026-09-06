@@ -35,6 +35,7 @@ export default function HomeProductCard({ product, index }: HomeProductCardProps
           alt={product.name}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.035]"
           style={{ objectPosition: imagePositions[index % imagePositions.length] }}
+          decoding="async"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-noviq-black opacity-20" />
