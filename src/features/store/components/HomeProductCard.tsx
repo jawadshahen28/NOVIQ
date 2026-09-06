@@ -6,8 +6,12 @@ import {
 } from '../../cart/hooks/useAddToCartSuccess';
 import type { Product } from '../../../types/catalog';
 import { formatCurrency, getDiscountedPrice } from '../../../utils/format';
+import { getResponsiveImageProps } from '../../../utils/responsiveImages';
 
 const imagePositions = ['34% center', '43% center', '50% center', '28% center'];
+const productCardImageSizes =
+  '(max-width: 639px) calc(50vw - 18px), (max-width: 1023px) calc(50vw - 24px), 255px';
+const productCardImageWidths = [220, 360, 480, 640] as const;
 
 interface HomeProductCardProps {
   product: Product;
@@ -31,7 +35,11 @@ export default function HomeProductCard({ product, index }: HomeProductCardProps
         aria-label={`عرض ${product.name}`}
       >
         <img
-          src={product.images[0]}
+          {...getResponsiveImageProps(product.images[0], {
+            fallbackWidth: 480,
+            sizes: productCardImageSizes,
+            widths: productCardImageWidths,
+          })}
           alt={product.name}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.035]"
           style={{ objectPosition: imagePositions[index % imagePositions.length] }}

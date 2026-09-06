@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import QuantityStepper from '../components/QuantityStepper';
 import { useCart } from '../features/cart/CartContext';
 import { formatCurrency, getDiscountedPrice } from '../utils/format';
+import { getOptimizedImageUrl } from '../utils/responsiveImages';
 
 export default function CartPage() {
   const { items, removeItem, subtotal, updateQuantity } = useCart();
@@ -62,9 +63,11 @@ export default function CartPage() {
                     className="h-[92px] w-[92px] overflow-hidden rounded-md border border-noviq-border bg-noviq-secondary sm:h-28 sm:w-28 md:h-[118px] md:w-[118px]"
                   >
                     <img
-                      src={item.product.images[0]}
+                      src={getOptimizedImageUrl(item.product.images[0], 240)}
                       alt={item.product.name}
                       className="h-full w-full object-cover"
+                      decoding="async"
+                      loading="lazy"
                     />
                   </Link>
 

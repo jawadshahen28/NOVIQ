@@ -6,15 +6,15 @@ import { CartProvider } from './features/cart/CartContext';
 import { StoreCatalogProvider } from './features/store/catalog/StoreCatalogContext';
 import { StoreSettingsProvider } from './features/store/settings/StoreSettingsContext';
 import StoreLayout from './layouts/StoreLayout';
-import CartPage from './pages/CartPage';
-import CategoryPage from './pages/CategoryPage';
-import CheckoutPage from './pages/CheckoutPage';
 import HomePage from './pages/HomePage';
-import NotFoundPage from './pages/NotFoundPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import ProductPage from './pages/ProductPage';
 import { trackStorefrontRoute } from './services/analyticsApi';
 
+const CartPage = lazy(() => import('./pages/CartPage'));
+const CategoryPage = lazy(() => import('./pages/CategoryPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
+const ProductPage = lazy(() => import('./pages/ProductPage'));
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const AdminAnalyticsPage = lazy(() => import('./pages/AdminAnalyticsPage'));
 const AdminCategoriesPage = lazy(() => import('./pages/AdminCategoriesPage'));
@@ -32,7 +32,24 @@ function StorefrontAnalyticsTracker() {
 
   useEffect(() => {
     if (location.pathname.startsWith('/admin')) return;
-    trackStorefrontRoute(`${location.pathname}${location.search}`);
+
+    const route = `${location.pathname}${location.search}`;
+    let idleId: number | undefined;
+    const timeoutId = globalThis.setTimeout(() => {
+      if ('requestIdleCallback' in window) {
+        idleId = window.requestIdleCallback(() => trackStorefrontRoute(route), { timeout: 2500 });
+      } else {
+        trackStorefrontRoute(route);
+      }
+    }, 1800);
+
+    return () => {
+      if (idleId !== undefined) {
+        window.cancelIdleCallback(idleId);
+      }
+
+      globalThis.clearTimeout(timeoutId);
+    };
   }, [location.pathname, location.search]);
 
   return null;

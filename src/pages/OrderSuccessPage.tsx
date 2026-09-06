@@ -6,6 +6,7 @@ import {
 } from '../services/submittedOrderStorage';
 import type { SubmittedOrderSnapshot } from '../types/catalog';
 import { formatCurrency } from '../utils/format';
+import { getOptimizedImageUrl } from '../utils/responsiveImages';
 
 interface SuccessState {
   order?: SubmittedOrderSnapshot;
@@ -82,9 +83,11 @@ export default function OrderSuccessPage() {
                     aria-label={item.productName}
                   >
                     <img
-                      src={item.image}
+                      src={getOptimizedImageUrl(item.image, 160)}
                       alt={item.productName}
                       className="h-full w-full object-cover"
+                      decoding="async"
+                      loading="lazy"
                     />
                   </Link>
                   <div className="min-w-0">

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../cart/CartContext';
 import { formatCurrency, getDiscountedPrice } from '../../../utils/format';
+import { getOptimizedImageUrl } from '../../../utils/responsiveImages';
 
 export default function CheckoutSummary() {
   const { items, subtotal } = useCart();
@@ -26,9 +27,11 @@ export default function CheckoutSummary() {
               className="aspect-square overflow-hidden rounded-md border border-noviq-border bg-noviq-secondary"
             >
               <img
-                src={item.product.images[0]}
+                src={getOptimizedImageUrl(item.product.images[0], 180)}
                 alt={item.product.name}
                 className="h-full w-full object-cover"
+                decoding="async"
+                loading="lazy"
               />
             </Link>
             <div className="min-w-0">

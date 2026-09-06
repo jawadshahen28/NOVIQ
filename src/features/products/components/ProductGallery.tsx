@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { Product } from '../../../types/catalog';
+import { getOptimizedImageUrl, getResponsiveImageProps } from '../../../utils/responsiveImages';
 
 interface ProductGalleryProps {
   product: Product;
 }
+
+const mainProductImageSizes =
+  '(max-width: 639px) 100vw, (max-width: 1023px) 80vw, 560px';
+const mainProductImageWidths = [480, 720, 960, 1280] as const;
 
 export default function ProductGallery({ product }: ProductGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(product.images[0]);
@@ -19,7 +24,11 @@ export default function ProductGallery({ product }: ProductGalleryProps) {
         data-product-main-frame
       >
         <img
-          src={selectedImage}
+          {...getResponsiveImageProps(selectedImage, {
+            fallbackWidth: 960,
+            sizes: mainProductImageSizes,
+            widths: mainProductImageWidths,
+          })}
           alt={product.name}
           className="h-full w-full object-contain"
           decoding="async"
@@ -45,7 +54,7 @@ export default function ProductGallery({ product }: ProductGalleryProps) {
             data-product-thumbnail
           >
             <img
-              src={image}
+              src={getOptimizedImageUrl(image, 240)}
               alt=""
               className="h-full w-full object-cover"
               decoding="async"

@@ -6,10 +6,15 @@ import {
 } from '../../../features/cart/hooks/useAddToCartSuccess';
 import type { Product } from '../../../types/catalog';
 import { formatCurrency, getDiscountedPrice } from '../../../utils/format';
+import { getResponsiveImageProps } from '../../../utils/responsiveImages';
 
 interface ProductCardProps {
   product: Product;
 }
+
+const productGridImageSizes =
+  '(max-width: 639px) 100vw, (max-width: 1023px) calc(50vw - 24px), 33vw';
+const productGridImageWidths = [320, 480, 640, 960] as const;
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { handleAddToCart, isSuccess } = useAddToCartSuccess(product);
@@ -24,9 +29,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         aria-label={`عرض تفاصيل ${product.name}`}
       >
         <img
-          src={product.images[0]}
+          {...getResponsiveImageProps(product.images[0], {
+            fallbackWidth: 640,
+            sizes: productGridImageSizes,
+            widths: productGridImageWidths,
+          })}
           alt={product.name}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          decoding="async"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-noviq-black opacity-20 transition group-hover:opacity-0" />

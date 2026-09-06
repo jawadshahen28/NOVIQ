@@ -5,6 +5,7 @@ import { useStoreCatalog } from '../features/store/catalog/StoreCatalogContext';
 import HomeProductCard from '../features/store/components/HomeProductCard';
 import TrustStrip from '../features/store/components/TrustStrip';
 import { getDiscountedPrice } from '../utils/format';
+import { getResponsiveImageProps } from '../utils/responsiveImages';
 
 type SortMode = 'newest' | 'price-asc' | 'price-desc' | 'discount';
 
@@ -20,6 +21,10 @@ const sortOptions: Array<{ value: SortMode; label: string }> = [
   { value: 'price-desc', label: 'السعر: من الأعلى إلى الأقل' },
   { value: 'discount', label: 'الأكثر خصما' },
 ];
+
+const categoryHeroImageSizes =
+  '(max-width: 1023px) 48vw, 45vw';
+const categoryHeroImageWidths = [320, 480, 720, 960] as const;
 
 export default function CategoryPage() {
   const { slug } = useParams();
@@ -95,9 +100,14 @@ export default function CategoryPage() {
       <section className="relative overflow-hidden border-b border-noviq-border bg-noviq-pure">
         <div className="pointer-events-none absolute inset-y-0 left-0 w-[48%] sm:w-[42%] lg:hidden">
           <img
-            src={category.image}
+            {...getResponsiveImageProps(category.image, {
+              fallbackWidth: 720,
+              sizes: categoryHeroImageSizes,
+              widths: categoryHeroImageWidths,
+            })}
             alt=""
             className="h-full w-full object-cover opacity-55"
+            decoding="async"
             style={{ objectPosition: imagePosition }}
           />
           <div className="absolute inset-0 bg-noviq-black opacity-35" />
@@ -135,9 +145,14 @@ export default function CategoryPage() {
 
           <div className="hero-image-reveal relative hidden h-60 overflow-hidden rounded-sm bg-noviq-secondary lg:block">
             <img
-              src={category.image}
+              {...getResponsiveImageProps(category.image, {
+                fallbackWidth: 960,
+                sizes: categoryHeroImageSizes,
+                widths: categoryHeroImageWidths,
+              })}
               alt={category.name}
               className="h-full w-full object-cover"
+              decoding="async"
               style={{ objectPosition: imagePosition }}
             />
             <div className="absolute inset-0 bg-noviq-black opacity-35" />

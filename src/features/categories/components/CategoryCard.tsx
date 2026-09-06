@@ -1,6 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Category } from '../../../types/catalog';
+import { getResponsiveImageProps } from '../../../utils/responsiveImages';
 
 interface CategoryCardProps {
   category: Category;
@@ -13,9 +14,14 @@ export default function CategoryCard({ category }: CategoryCardProps) {
       className="group relative min-h-[300px] overflow-hidden rounded-md border border-noviq-border bg-noviq-card"
     >
       <img
-        src={category.image}
+        {...getResponsiveImageProps(category.image, {
+          fallbackWidth: 640,
+          sizes: '(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw',
+          widths: [320, 480, 640, 960],
+        })}
         alt={category.name}
         className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+        decoding="async"
         loading="lazy"
       />
       <div className="absolute inset-0 bg-noviq-black opacity-70 transition group-hover:opacity-60" />

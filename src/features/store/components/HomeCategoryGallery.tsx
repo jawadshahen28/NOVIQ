@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useStoreCatalog } from '../catalog/StoreCatalogContext';
 import type { CategorySlug } from '../../../types/catalog';
+import { getResponsiveImageProps } from '../../../utils/responsiveImages';
 
 const brandLabels: Record<CategorySlug, string> = {
   rolex: 'ROLEX',
@@ -15,6 +16,10 @@ const imagePositions: Record<CategorySlug, string> = {
   curren: '48% center',
   boss: '30% center',
 };
+
+const categoryImageSizes =
+  '(max-width: 429px) 68vw, (max-width: 639px) 62vw, (max-width: 1023px) 46vw, 31vw';
+const categoryImageWidths = [320, 480, 640, 960] as const;
 
 export default function HomeCategoryGallery() {
   const { categories } = useStoreCatalog();
@@ -59,7 +64,11 @@ export default function HomeCategoryGallery() {
                 data-home-category-card
               >
                 <img
-                  src={category.image}
+                  {...getResponsiveImageProps(category.image, {
+                    fallbackWidth: 640,
+                    sizes: categoryImageSizes,
+                    widths: categoryImageWidths,
+                  })}
                   alt={category.name}
                   className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
                   style={{ objectPosition: imagePositions[category.slug] }}
