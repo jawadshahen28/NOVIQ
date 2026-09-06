@@ -117,8 +117,8 @@ export function getStockCondition(stock: number): ProductStockCondition {
   return 'available';
 }
 
-export function getStockStatus(product: Pick<Product, 'isAvailable' | 'stock'>): ProductStockStatus {
-  if (!product.isAvailable && product.stock > 0) {
+export function getStockStatus(product: Pick<Product, 'isActive' | 'isAvailable' | 'stock'>): ProductStockStatus {
+  if (product.isActive === false || (!product.isAvailable && product.stock > 0)) {
     return 'hidden';
   }
 
@@ -158,7 +158,7 @@ export function productToFormValues(product: Product): ProductFormValues {
     stock: String(product.stock),
     images: [...product.images],
     primaryImageIndex: 0,
-    isAvailable: product.isAvailable,
+    isAvailable: product.isActive ?? product.isAvailable,
   };
 }
 
@@ -257,6 +257,7 @@ export function createProductFromForm(values: ProductFormValues, existingProduct
     discountPercent,
     images,
     stock,
+    isActive: values.isAvailable,
     isAvailable: values.isAvailable && stock > 0,
   };
 }

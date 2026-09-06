@@ -3,6 +3,7 @@ import { CategoryModel } from '../models/Category.js';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
 import { businessDayStart, businessDateKey, addBusinessDays } from '../config/businessTime.js';
+import { getDocumentReferenceId } from '../utils/documentReference.js';
 import { LOW_STOCK_THRESHOLD } from '../utils/inventory.js';
 import { isRevenueStatus } from '../utils/metrics.js';
 import { sendSuccess } from '../utils/apiResponse.js';
@@ -46,8 +47,8 @@ export const getAdminDashboard = asyncHandler(async (_request, response) => {
     orderMetrics: ['جديد', 'تم التأكيد', 'قيد التجهيز', 'مكتمل', 'ملغي'].map((status) => ({ status, count: orders.filter((order) => order.status === status).length })),
     recentOrders: allRecentOrders.map((order) => ({ id: order.id, customerName: order.customer.name, itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0), total: order.total, status: order.status, createdAt: order.createdAt })),
     salesTrend,
-    topProducts: Array.from(productSales.entries()).sort((a, b) => b[1].unitsSold - a[1].unitsSold).slice(0, 5).map(([id, item]) => ({ id, ...item, categoryName: categoryNames.get(products.find((product) => product.id === id)?.category.toString() ?? '') ?? 'غير مصنف' })),
-    lowStock: products.filter((product) => product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD).sort((a, b) => a.stock - b.stock).slice(0, 8).map((product) => ({ id: product.id, name: product.name, image: product.primaryImage || product.images[0], stock: product.stock, categoryName: categoryNames.get(product.category.toString()) ?? 'غير مصنف' })),
+    topProducts: Array.from(productSales.entries()).sort((a, b) => b[1].unitsSold - a[1].unitsSold).slice(0, 5).map(([id, item]) => ({ id, ...item, categoryName: categoryNames.get(getDocumentReferenceId(products.find((product) => product.id === id)?.category)) ?? 'غير مصنف' })),
+    lowStock: products.filter((product) => product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD).sort((a, b) => a.stock - b.stock).slice(0, 8).map((product) => ({ id: product.id, name: product.name, image: product.primaryImage || product.images[0], stock: product.stock, categoryName: categoryNames.get(getDocumentReferenceId(product.category)) ?? 'غير مصنف' })),
   };
   return sendSuccess(response, data, 'Dashboard fetched successfully');
 });

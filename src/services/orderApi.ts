@@ -44,8 +44,29 @@ export function createOrder(input: CreateOrderInput) {
   });
 }
 
-export function listAdminOrders() {
-  return apiRequest<ListOrdersResponse>('/admin/orders?limit=100&page=1');
+function listAdminOrdersPage(page: number) {
+  return apiRequest<ListOrdersResponse>(`/admin/orders?limit=100&page=${page}`);
+}
+
+export async function listAdminOrders() {
+  const firstPage = await listAdminOrdersPage(1);
+  const totalPages = firstPage.pagination.totalPages;
+
+  if (totalPages <= 1) {
+    return firstPage;
+  }
+
+  const orders = [...firstPage.orders];
+
+  for (let page = 2; page <= totalPages; page += 1) {
+    const response = await listAdminOrdersPage(page);
+    orders.push(...response.orders);
+  }
+
+  return {
+    ...firstPage,
+    orders,
+  };
 }
 
 export function getAdminOrder(orderId: string) {

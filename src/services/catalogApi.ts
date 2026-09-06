@@ -23,18 +23,65 @@ interface ProductsResponse {
   };
 }
 
+interface ListProductsOptions {
+  admin?: boolean;
+  category?: string;
+  limit?: number;
+  page?: number;
+}
+
+function createProductListQuery(options: ListProductsOptions) {
+  const params = new URLSearchParams();
+
+  if (options.category) {
+    params.set('category', options.category);
+  }
+
+  if (options.limit) {
+    params.set('limit', String(options.limit));
+  }
+
+  if (options.page) {
+    params.set('page', String(options.page));
+  }
+
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
+
 export function listCategories(admin = false) {
   return apiRequest<CategoriesResponse>(admin ? '/admin/categories' : '/categories');
 }
 
-export function listProducts(options: { admin?: boolean; category?: string } = {}) {
+export function listProducts(options: ListProductsOptions = {}) {
   const path = options.admin ? '/admin/products' : '/products';
-  const query = options.category ? `?category=${encodeURIComponent(options.category)}` : '';
-  return apiRequest<ProductsResponse>(`${path}${query}`);
+  return apiRequest<ProductsResponse>(`${path}${createProductListQuery(options)}`);
 }
 
 export function getProduct(slug: string) {
   return apiRequest<ProductResponse>(`/products/${encodeURIComponent(slug)}`);
+}
+
+export async function listAllAdminProducts() {
+  const limit = 100;
+  const firstPage = await listProducts({ admin: true, limit, page: 1 });
+  const totalPages = firstPage.pagination?.totalPages ?? 1;
+
+  if (totalPages <= 1) {
+    return firstPage;
+  }
+
+  const products = [...firstPage.products];
+
+  for (let page = 2; page <= totalPages; page += 1) {
+    const response = await listProducts({ admin: true, limit, page });
+    products.push(...response.products);
+  }
+
+  return {
+    ...firstPage,
+    products,
+  };
 }
 
 export function createCategory(category: Omit<Category, 'id'>) {
@@ -80,7 +127,7 @@ function toProductPayload(product: Product) {
     costPrice: product.costPrice,
     description: product.description,
     images: product.images,
-    isActive: product.isAvailable,
+    isActive: product.isActive ?? product.isAvailable,
     name: product.name,
     price: product.sellingPrice ?? Math.round(product.price * (1 - product.discountPercent / 100)),
     primaryImage: product.images[0],

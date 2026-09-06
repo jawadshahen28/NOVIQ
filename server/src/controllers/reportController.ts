@@ -2,6 +2,7 @@ import { CategoryModel } from '../models/Category.js';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
 import { ORDER_STATUSES, type Order } from '../types/models.js';
+import { getDocumentReferenceId } from '../utils/documentReference.js';
 import { LOW_STOCK_THRESHOLD } from '../utils/inventory.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -97,7 +98,7 @@ export const getAdminReportSummary = asyncHandler(async (request, response) => {
       productSales.set(productId, productEntry);
 
       if (product) {
-        const categoryId = product.category.toString();
+        const categoryId = getDocumentReferenceId(product.category);
         const category = categoryMap.get(categoryId);
         const categoryEntry = categorySales.get(categoryId) ?? {
           id: categoryId,

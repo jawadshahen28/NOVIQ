@@ -41,7 +41,7 @@ export default function ProductPage() {
     return products
       .filter((candidate) => candidate.category === product.category && candidate.id !== product.id)
       .slice(0, 3);
-  }, [product]);
+  }, [product, products]);
 
   if (!product) {
     return <NotFoundPage />;

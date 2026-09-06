@@ -90,12 +90,12 @@ export default function AdminInventoryPage() {
       .then(({ items, summary: inventorySummary }) => {
         if (!isMounted) return;
         setInventoryProducts(
-          items
-            .map((item) => {
-              const product = products.find((candidate) => candidate.id === item.id);
-              return product ? applyInventoryItem(product, item) : null;
-            })
-            .filter((product): product is Product => product !== null),
+          items.map((item) =>
+            applyInventoryItem(
+              products.find((candidate) => candidate.id === item.id),
+              item,
+            ),
+          ),
         );
         setSummary(inventorySummary);
         setLoadError('');

@@ -24,6 +24,7 @@ export interface Product {
   stock: number;
   category: CategorySlug;
   categoryId?: string;
+  isActive?: boolean;
   isAvailable: boolean;
   specifications: Record<string, string>;
 }

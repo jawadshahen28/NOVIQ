@@ -57,7 +57,7 @@ export default function CategoryPage() {
 
         return 0;
       });
-  }, [category, sortMode]);
+  }, [category, products, sortMode]);
 
   if (!category) {
     return (

@@ -3,7 +3,6 @@ import HomeProductCard from './HomeProductCard';
 
 export default function SelectedWatches() {
   const { products } = useStoreCatalog();
-  const selectedProducts = products.filter((product) => product.isAvailable);
 
   return (
     <section id="selected-watches" className="bg-noviq-black pt-2 pb-10 lg:pt-4 lg:pb-14">
@@ -15,7 +14,7 @@ export default function SelectedWatches() {
         </div>
 
         <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
-          {selectedProducts.map((product, index) => (
+          {products.map((product, index) => (
             <HomeProductCard key={product.id} product={product} index={index} />
           ))}
         </div>

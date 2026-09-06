@@ -12,8 +12,8 @@ import {
   createProduct as createProductApi,
   deleteCategory as deleteCategoryApi,
   deleteProduct as deleteProductApi,
+  listAllAdminProducts,
   listCategories,
-  listProducts,
   updateCategory as updateCategoryApi,
   updateProduct as updateProductApi,
   updateProductStock as updateProductStockApi,
@@ -49,7 +49,7 @@ export function AdminCatalogProvider({ children }: { children: ReactNode }) {
 
     let isMounted = true;
 
-    void Promise.all([listCategories(true), listProducts({ admin: true })])
+    void Promise.all([listCategories(true), listAllAdminProducts()])
       .then(([categoryResponse, productResponse]) => {
         if (isMounted) {
           setCategories(categoryResponse.categories);
