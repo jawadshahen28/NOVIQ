@@ -166,28 +166,6 @@ export default function ProductPage() {
         </div>
       </section>
 
-      <section className="py-10 lg:py-14" data-product-specs>
-        <div className="luxury-container">
-          <SectionHeader title="المواصفات" description="تفاصيل أساسية قبل قرار الشراء." />
-          <div className="overflow-hidden rounded-md border border-noviq-border">
-            <table className="w-full border-collapse bg-noviq-card text-sm">
-              <tbody>
-                {Object.entries(product.specifications).map(([label, value]) => (
-                  <tr key={label} className="border-b border-noviq-border last:border-b-0">
-                    <th className="w-[38%] bg-noviq-secondary px-3 py-3 text-right align-top font-semibold leading-7 text-noviq-text sm:w-1/3 sm:px-5 sm:py-4">
-                      {label}
-                    </th>
-                    <td className="px-3 py-3 leading-7 text-noviq-secondaryText sm:px-5 sm:py-4">
-                      {value}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
       {relatedProducts.length > 0 ? (
         <section className="border-t border-noviq-border bg-noviq-secondary py-10 lg:py-14">
           <div className="luxury-container">
