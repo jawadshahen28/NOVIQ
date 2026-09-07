@@ -13,6 +13,7 @@ export interface Product {
   id: string;
   name: string;
   slug: string;
+  brand?: string;
   shortDescription: string;
   description: string;
   price: number;

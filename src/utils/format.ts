@@ -1,9 +1,11 @@
 import type { Product } from '../types/catalog';
 
+export const STORE_CURRENCY_CODE = 'ILS';
+
 export function formatCurrency(value: number) {
   return new Intl.NumberFormat('ar-IL', {
     style: 'currency',
-    currency: 'ILS',
+    currency: STORE_CURRENCY_CODE,
     maximumFractionDigits: 0,
   }).format(value);
 }

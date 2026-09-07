@@ -4,6 +4,13 @@ export const SEO_SITE_NAME = 'NOVIQ';
 export const SEO_SITE_URL = 'https://noviqshop.shop';
 
 type OpenGraphType = 'product' | 'website';
+export type JsonLdValue =
+  | boolean
+  | number
+  | string
+  | null
+  | JsonLdValue[]
+  | { [key: string]: JsonLdValue | undefined };
 
 interface SeoProps {
   canonicalPath?: string | undefined;
@@ -12,9 +19,11 @@ interface SeoProps {
   ogType?: OpenGraphType | undefined;
   openGraph?: boolean | undefined;
   robots?: string | undefined;
+  structuredData?: JsonLdValue[] | undefined;
   title: string;
 }
 
+const jsonLdSelector = 'script[type="application/ld+json"][data-noviq-json-ld]';
 const openGraphProperties = [
   'og:description',
   'og:image',
@@ -48,7 +57,7 @@ export function createSiteUrl(path: string) {
   return new URL(normalizedPath, SEO_SITE_URL).toString();
 }
 
-function createAbsoluteUrl(value: string) {
+export function createAbsoluteUrl(value: string) {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
@@ -131,6 +140,26 @@ function removeOpenGraphTags() {
   }
 }
 
+function removeJsonLdTags() {
+  const elements = Array.from(document.head.querySelectorAll<HTMLScriptElement>(jsonLdSelector));
+
+  for (const element of elements) {
+    element.remove();
+  }
+}
+
+function setJsonLdTags(structuredData: JsonLdValue[] | undefined) {
+  removeJsonLdTags();
+
+  for (const item of structuredData ?? []) {
+    const element = document.createElement('script');
+    element.type = 'application/ld+json';
+    element.dataset.noviqJsonLd = 'true';
+    element.textContent = JSON.stringify(item);
+    document.head.appendChild(element);
+  }
+}
+
 export default function Seo({
   canonicalPath,
   description,
@@ -138,6 +167,7 @@ export default function Seo({
   ogType = 'website',
   openGraph = true,
   robots,
+  structuredData,
   title,
 }: SeoProps) {
   useEffect(() => {
@@ -161,9 +191,11 @@ export default function Seo({
       removeCanonical();
     }
 
+    setJsonLdTags(structuredData);
+
     if (!openGraph) {
       removeOpenGraphTags();
-      return;
+      return removeJsonLdTags;
     }
 
     setMeta('property', 'og:title', normalizedTitle);
@@ -182,7 +214,9 @@ export default function Seo({
     } else {
       removeMeta('property', 'og:image');
     }
-  }, [canonicalPath, description, image, ogType, openGraph, robots, title]);
+
+    return removeJsonLdTags;
+  }, [canonicalPath, description, image, ogType, openGraph, robots, structuredData, title]);
 
   return null;
 }
