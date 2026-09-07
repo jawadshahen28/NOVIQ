@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit -p tsconfig.app.json && vite build",
+    "build": "npm run generate:sitemap && tsc --noEmit -p tsconfig.app.json && vite build",
+    "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "preview": "vite preview",
     "dev:server": "npm --prefix server run dev",
     "build:server": "npm --prefix server run build",

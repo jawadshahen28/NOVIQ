@@ -1,8 +1,10 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import Seo from './components/Seo';
 import { AdminAuthProvider } from './features/admin/auth/AdminAuthContext';
 import ProtectedAdminRoute from './features/admin/auth/ProtectedAdminRoute';
 import { CartProvider } from './features/cart/CartContext';
+import StorefrontSeo from './features/store/components/StorefrontSeo';
 import { StoreCatalogProvider } from './features/store/catalog/StoreCatalogContext';
 import { StoreSettingsProvider } from './features/store/settings/StoreSettingsContext';
 import StoreLayout from './layouts/StoreLayout';
@@ -68,6 +70,7 @@ function StorefrontRouteProviders() {
     <StoreSettingsProvider>
       <StoreCatalogProvider>
         <CartProvider>
+          <StorefrontSeo />
           <Outlet />
         </CartProvider>
       </StoreCatalogProvider>
@@ -78,8 +81,28 @@ function StorefrontRouteProviders() {
 function AdminRouteProviders() {
   return (
     <AdminAuthProvider>
+      <Seo
+        description="NOVIQ admin panel."
+        openGraph={false}
+        robots="noindex,nofollow"
+        title="NOVIQ Admin"
+      />
       <Outlet />
     </AdminAuthProvider>
+  );
+}
+
+function NotFoundRoute() {
+  return (
+    <>
+      <Seo
+        description="The requested NOVIQ page was not found."
+        openGraph={false}
+        robots="noindex,nofollow"
+        title="NOVIQ"
+      />
+      <NotFoundPage />
+    </>
   );
 }
 
@@ -118,7 +141,7 @@ export default function App() {
             </Route>
           </Route>
 
-          <Route path="404" element={<NotFoundPage />} />
+          <Route path="404" element={<NotFoundRoute />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </Suspense>
