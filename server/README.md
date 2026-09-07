@@ -65,8 +65,8 @@ Production frontend builds also require `VITE_API_BASE_URL` at the project root 
 - Set `NODE_ENV=production`, serve over HTTPS, and set `CLIENT_URL` to the exact deployed frontend origin.
 - In production, Express trusts the first proxy hop so secure cookies and rate-limit IP handling work correctly behind hosts such as Render, Fly, or a reverse proxy.
 - Production cookies use `httpOnly`, `secure: true`, and `sameSite: "none"` for cross-site frontend/backend deployments.
-- MongoDB `autoIndex` is disabled in production; ensure indexes are created during deployment or migration before relying on new query patterns.
-- `/api/health` is safe for health checks. Platform cold starts and database wake-up latency are infrastructure concerns; use an always-on instance, minimum instances, or an external uptime check if first-request latency has a strict SLA.
+- MongoDB `autoIndex` is disabled in production; run the explicit index command during deployment or migration before relying on new query patterns.
+- `/api/health` is safe for health checks. Render Free backend instances can spin down after inactivity, so the first request can be slower while the backend wakes and reconnects. If first-request latency becomes unacceptable, upgrade the backend to an always-on paid Render instance.
 
 ## Commands
 
@@ -75,6 +75,7 @@ From the project root:
 ```bash
 npm run dev:server
 npm run create-admin --prefix server
+npm run ensure:indexes
 npm run typecheck:server
 npm run build:server
 npm run start:server
@@ -85,6 +86,7 @@ From `server/`:
 ```bash
 npm run dev
 npm run create-admin
+npm run ensure:indexes
 npm run typecheck
 npm run build
 npm run start
@@ -93,6 +95,20 @@ npm run start
 ## MongoDB
 
 The server validates environment variables, connects to MongoDB with Mongoose, and only starts Express after a successful database connection. Connection logs redact credentials and show only the safe MongoDB target.
+
+Production has Mongoose `autoIndex` disabled. To create any missing schema-defined indexes without dropping existing database indexes, run:
+
+```bash
+npm run ensure:indexes
+```
+
+Run this from `server/` with the production environment configured, or from the project root with:
+
+```bash
+npm run ensure:indexes
+```
+
+The command is idempotent, logs each schema-defined index, calls `Model.createIndexes()` for each model, and fails clearly if MongoDB rejects an index build.
 
 ## API
 

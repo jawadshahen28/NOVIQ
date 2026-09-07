@@ -1,6 +1,7 @@
 import { CategoryModel } from '../models/Category.js';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
+import { businessDayStart, addBusinessDays } from '../config/businessTime.js';
 import { ORDER_STATUSES, type Order } from '../types/models.js';
 import { getDocumentReferenceId } from '../utils/documentReference.js';
 import { LOW_STOCK_THRESHOLD } from '../utils/inventory.js';
@@ -14,10 +15,7 @@ function getRangeStart(range: AdminReportQuery['range']) {
   }
 
   const days = Number(range.replace('d', ''));
-  const start = new Date();
-  start.setUTCHours(0, 0, 0, 0);
-  start.setUTCDate(start.getUTCDate() - days + 1);
-  return start;
+  return addBusinessDays(businessDayStart(), -days + 1);
 }
 
 function isRevenueOrder(order: Order) {

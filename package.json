@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "dev:server": "npm --prefix server run dev",
     "build:server": "npm --prefix server run build",
+    "ensure:indexes": "npm --prefix server run ensure:indexes",
     "typecheck:server": "npm --prefix server run typecheck",
     "start:server": "npm --prefix server run start"
   },

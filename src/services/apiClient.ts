@@ -1,11 +1,22 @@
-const defaultApiBaseUrl = 'http://localhost:5010';
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 
 if (import.meta.env.PROD && !configuredApiBaseUrl) {
   throw new Error('VITE_API_BASE_URL is required for production builds');
 }
 
-const normalizedApiBaseUrl = (configuredApiBaseUrl || defaultApiBaseUrl).replace(/\/+$/, '');
+function getApiBaseUrl() {
+  if (configuredApiBaseUrl) {
+    return configuredApiBaseUrl;
+  }
+
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5010';
+  }
+
+  throw new Error('VITE_API_BASE_URL is required');
+}
+
+const normalizedApiBaseUrl = getApiBaseUrl().replace(/\/+$/, '');
 const apiBaseUrl = normalizedApiBaseUrl.endsWith('/api')
   ? normalizedApiBaseUrl
   : `${normalizedApiBaseUrl}/api`;
