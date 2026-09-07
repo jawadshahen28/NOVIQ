@@ -9,6 +9,8 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 
 export const app = express();
+const loaderIoToken = 'loaderio-6584858c418570e1dbb33efe8870230d';
+const loaderIoPath = `/${loaderIoToken}.txt`;
 
 app.disable('x-powered-by');
 
@@ -20,6 +22,10 @@ app.use(helmet());
 app.use(cors(createCorsOptions()));
 app.use(cookieParser());
 app.use(express.json({ limit: '1mb' }));
+
+app.get(loaderIoPath, (_request, response) => {
+  response.type('text/plain').send(loaderIoToken);
+});
 
 app.use('/api', apiRouter);
 
