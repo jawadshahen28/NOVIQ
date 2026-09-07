@@ -18,6 +18,10 @@ const updateableSettingsFields = [
   'storeDescription',
   'storeName',
   'storePhone',
+  'secondaryPhone',
+  'instagramUrl',
+  'facebookUrl',
+  'copyrightText',
   'whatsappNumber',
 ] as const satisfies readonly (keyof UpdateStoreSettingsBody)[];
 

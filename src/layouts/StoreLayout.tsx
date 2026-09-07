@@ -1,4 +1,13 @@
-import { Instagram, Menu, Search, ShoppingBag, X } from 'lucide-react';
+import {
+  Facebook,
+  Instagram,
+  Menu,
+  MessageCircle,
+  Phone,
+  Search,
+  ShoppingBag,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import Logo from '../components/Logo';
@@ -6,6 +15,11 @@ import { useCart } from '../features/cart/CartContext';
 import FloatingWhatsApp from '../features/store/components/FloatingWhatsApp';
 import { useStoreSettings } from '../features/store/settings/StoreSettingsContext';
 import { defaultStoreSettings } from '../features/store/settings/storeSettingsDefaults';
+import {
+  createExternalHref,
+  createPhoneHref,
+  createWhatsAppHref,
+} from '../utils/contactLinks';
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `relative flex h-[72px] items-center text-[13px] font-medium transition duration-200 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:-translate-x-1/2 after:bg-noviq-gold after:transition-all after:duration-200 ${
@@ -23,6 +37,29 @@ export default function StoreLayout() {
   const { itemCount } = useCart();
   const { settings } = useStoreSettings();
   const storeName = settings.storeName || defaultStoreSettings.storeName;
+  const copyrightText =
+    settings.copyrightText.trim() || `جميع الحقوق محفوظة ${storeName} © 2026`;
+  const phoneLinks = [
+    { href: createPhoneHref(settings.storePhone), label: settings.storePhone.trim() },
+    { href: createPhoneHref(settings.secondaryPhone), label: settings.secondaryPhone.trim() },
+  ].filter((link) => link.href && link.label);
+  const socialLinks = [
+    {
+      href: createExternalHref(settings.instagramUrl),
+      icon: Instagram,
+      label: 'Instagram',
+    },
+    {
+      href: createExternalHref(settings.facebookUrl),
+      icon: Facebook,
+      label: 'Facebook',
+    },
+    {
+      href: createWhatsAppHref(settings.whatsappNumber),
+      icon: MessageCircle,
+      label: 'WhatsApp',
+    },
+  ].filter((link) => link.href);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -152,21 +189,51 @@ export default function StoreLayout() {
       </main>
 
       <footer id="contact" className="border-t border-noviq-border bg-noviq-pure">
-        <div className="luxury-container flex min-h-24 flex-col items-center justify-center gap-4 py-7 text-center sm:flex-row sm:justify-between sm:text-right">
-          <p className="max-w-full truncate font-brand text-2xl text-noviq-gold" title={storeName}>
-            {storeName}
-          </p>
-          <p className="text-xs text-noviq-muted">
-            جميع الحقوق محفوظة {storeName} © 2026
-          </p>
-          <div className="flex items-center gap-3">
-            <a
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-noviq-border text-noviq-secondaryText transition hover:border-noviq-gold hover:text-noviq-gold"
-              href="/#"
-              aria-label="Instagram"
-            >
-              <Instagram size={17} strokeWidth={1.8} />
-            </a>
+        <div className="luxury-container grid min-h-24 gap-5 py-7 text-center sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:text-right">
+          <div className="grid min-w-0 gap-3">
+            <div className="flex justify-center sm:justify-start">
+              <Logo label={storeName} />
+            </div>
+
+            {phoneLinks.length > 0 ? (
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-noviq-secondaryText sm:justify-start">
+                {phoneLinks.map((phoneLink, index) => (
+                  <a
+                    key={`${phoneLink.label}-${index}`}
+                    className="inline-flex min-h-8 items-center gap-2 transition hover:text-noviq-gold"
+                    href={phoneLink.href}
+                  >
+                    <Phone size={15} className="shrink-0 text-noviq-gold" strokeWidth={1.8} />
+                    <span dir="ltr">{phoneLink.label}</span>
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex min-w-0 flex-col items-center gap-3 sm:items-end">
+            {socialLinks.length > 0 ? (
+              <div className="flex items-center gap-3" dir="ltr">
+                {socialLinks.map((socialLink) => {
+                  const Icon = socialLink.icon;
+
+                  return (
+                    <a
+                      key={socialLink.label}
+                      aria-label={socialLink.label}
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-noviq-border text-noviq-secondaryText transition hover:border-noviq-gold hover:text-noviq-gold"
+                      href={socialLink.href}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      <Icon size={17} strokeWidth={1.8} />
+                    </a>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            <p className="text-xs leading-6 text-noviq-muted">{copyrightText}</p>
           </div>
         </div>
       </footer>

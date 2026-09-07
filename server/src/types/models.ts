@@ -96,6 +96,10 @@ export interface StoreSettings extends TimestampFields {
   storeDescription: string;
   whatsappNumber: string;
   storePhone?: string;
+  secondaryPhone?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  copyrightText?: string;
   heroTitle: string;
   heroDescription: string;
   heroImage: string;

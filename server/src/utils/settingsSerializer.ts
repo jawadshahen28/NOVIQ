@@ -12,6 +12,10 @@ export interface SerializedStoreSettings {
   storeDescription: string;
   whatsappNumber: string;
   storePhone: string;
+  secondaryPhone: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  copyrightText: string;
   heroTitle: string;
   heroDescription: string;
   heroImage: string;
@@ -34,6 +38,10 @@ export type PublicStoreSettings = Pick<
   | 'storeDescription'
   | 'storeName'
   | 'storePhone'
+  | 'secondaryPhone'
+  | 'instagramUrl'
+  | 'facebookUrl'
+  | 'copyrightText'
   | 'whatsappNumber'
 >;
 
@@ -72,6 +80,13 @@ export function serializeStoreSettings(settings: HydratedDocument<StoreSettings>
     ),
     storeName: nonEmptyStringValue(settings.storeName, DEFAULT_STORE_SETTINGS.storeName),
     storePhone: stringValue(settings.storePhone, DEFAULT_STORE_SETTINGS.storePhone),
+    secondaryPhone: stringValue(
+      settings.secondaryPhone,
+      DEFAULT_STORE_SETTINGS.secondaryPhone,
+    ),
+    instagramUrl: stringValue(settings.instagramUrl, DEFAULT_STORE_SETTINGS.instagramUrl),
+    facebookUrl: stringValue(settings.facebookUrl, DEFAULT_STORE_SETTINGS.facebookUrl),
+    copyrightText: stringValue(settings.copyrightText, DEFAULT_STORE_SETTINGS.copyrightText),
     whatsappNumber: stringValue(
       settings.whatsappNumber,
       DEFAULT_STORE_SETTINGS.whatsappNumber,
@@ -103,6 +118,10 @@ export function serializePublicStoreSettings(settings: HydratedDocument<StoreSet
     storeDescription: serialized.storeDescription,
     storeName: serialized.storeName,
     storePhone: serialized.storePhone,
+    secondaryPhone: serialized.secondaryPhone,
+    instagramUrl: serialized.instagramUrl,
+    facebookUrl: serialized.facebookUrl,
+    copyrightText: serialized.copyrightText,
     whatsappNumber: serialized.whatsappNumber,
   };
 

@@ -68,6 +68,10 @@ const serverErrorFields = [
   'storeName',
   'whatsappNumber',
   'storePhone',
+  'secondaryPhone',
+  'instagramUrl',
+  'facebookUrl',
+  'copyrightText',
   'heroTitle',
   'heroImage',
 ] as const;
@@ -253,8 +257,114 @@ export default function AdminSettingsPage() {
             dataAttribute="contact"
             eyebrow="التواصل"
             icon={MessageCircle}
-            title="إعدادات التواصل"
+            title="معلومات التواصل والفوتر"
           >
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
+                <span>رقم الهاتف</span>
+                <input
+                  aria-describedby={errors.storePhone ? getFieldErrorId('storePhone') : undefined}
+                  aria-invalid={Boolean(errors.storePhone)}
+                  className="field"
+                  data-store-phone-input
+                  dir="ltr"
+                  inputMode="tel"
+                  onChange={(event) => updateValue('storePhone', event.target.value)}
+                  placeholder="0500000000"
+                  value={values.storePhone}
+                />
+                {errors.storePhone ? (
+                  <span
+                    className="text-xs font-medium text-noviq-gold"
+                    data-settings-error="storePhone"
+                    id={getFieldErrorId('storePhone')}
+                  >
+                    {errors.storePhone}
+                  </span>
+                ) : null}
+              </label>
+
+              <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
+                <span>رقم هاتف إضافي</span>
+                <input
+                  aria-describedby={
+                    errors.secondaryPhone ? getFieldErrorId('secondaryPhone') : undefined
+                  }
+                  aria-invalid={Boolean(errors.secondaryPhone)}
+                  className="field"
+                  data-secondary-phone-input
+                  dir="ltr"
+                  inputMode="tel"
+                  onChange={(event) => updateValue('secondaryPhone', event.target.value)}
+                  placeholder="0500000000"
+                  value={values.secondaryPhone}
+                />
+                {errors.secondaryPhone ? (
+                  <span
+                    className="text-xs font-medium text-noviq-gold"
+                    data-settings-error="secondaryPhone"
+                    id={getFieldErrorId('secondaryPhone')}
+                  >
+                    {errors.secondaryPhone}
+                  </span>
+                ) : null}
+              </label>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
+                <span>رابط Instagram</span>
+                <input
+                  aria-describedby={
+                    errors.instagramUrl ? getFieldErrorId('instagramUrl') : undefined
+                  }
+                  aria-invalid={Boolean(errors.instagramUrl)}
+                  className="field"
+                  data-instagram-url-input
+                  dir="ltr"
+                  inputMode="url"
+                  onChange={(event) => updateValue('instagramUrl', event.target.value)}
+                  placeholder="https://instagram.com/noviq"
+                  value={values.instagramUrl}
+                />
+                {errors.instagramUrl ? (
+                  <span
+                    className="text-xs font-medium text-noviq-gold"
+                    data-settings-error="instagramUrl"
+                    id={getFieldErrorId('instagramUrl')}
+                  >
+                    {errors.instagramUrl}
+                  </span>
+                ) : null}
+              </label>
+
+              <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
+                <span>رابط Facebook</span>
+                <input
+                  aria-describedby={
+                    errors.facebookUrl ? getFieldErrorId('facebookUrl') : undefined
+                  }
+                  aria-invalid={Boolean(errors.facebookUrl)}
+                  className="field"
+                  data-facebook-url-input
+                  dir="ltr"
+                  inputMode="url"
+                  onChange={(event) => updateValue('facebookUrl', event.target.value)}
+                  placeholder="https://facebook.com/noviq"
+                  value={values.facebookUrl}
+                />
+                {errors.facebookUrl ? (
+                  <span
+                    className="text-xs font-medium text-noviq-gold"
+                    data-settings-error="facebookUrl"
+                    id={getFieldErrorId('facebookUrl')}
+                  >
+                    {errors.facebookUrl}
+                  </span>
+                ) : null}
+              </label>
+            </div>
+
             <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
               <span>رقم WhatsApp</span>
               <input
@@ -282,25 +392,25 @@ export default function AdminSettingsPage() {
             </label>
 
             <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
-              <span>رقم هاتف المتجر</span>
-              <input
-                aria-describedby={errors.storePhone ? getFieldErrorId('storePhone') : undefined}
-                aria-invalid={Boolean(errors.storePhone)}
-                className="field"
-                data-store-phone-input
-                dir="ltr"
-                inputMode="tel"
-                onChange={(event) => updateValue('storePhone', event.target.value)}
-                placeholder="0500000000"
-                value={values.storePhone}
+              <span>نص حقوق النشر</span>
+              <textarea
+                aria-describedby={
+                  errors.copyrightText ? getFieldErrorId('copyrightText') : undefined
+                }
+                aria-invalid={Boolean(errors.copyrightText)}
+                className="field min-h-20 resize-y leading-7"
+                data-copyright-text-input
+                onChange={(event) => updateValue('copyrightText', event.target.value)}
+                placeholder={`جميع الحقوق محفوظة ${values.storeName || defaultAdminSettings.storeName} © 2026`}
+                value={values.copyrightText}
               />
-              {errors.storePhone ? (
+              {errors.copyrightText ? (
                 <span
                   className="text-xs font-medium text-noviq-gold"
-                  data-settings-error="storePhone"
-                  id={getFieldErrorId('storePhone')}
+                  data-settings-error="copyrightText"
+                  id={getFieldErrorId('copyrightText')}
                 >
-                  {errors.storePhone}
+                  {errors.copyrightText}
                 </span>
               ) : null}
             </label>

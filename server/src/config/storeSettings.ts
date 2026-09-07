@@ -10,5 +10,9 @@ export const DEFAULT_STORE_SETTINGS = {
   storeDescription: 'متجر ساعات مختارة تجمع بين الأناقة والجودة والتفاصيل الراقية.',
   storeName: 'NOVIQ',
   storePhone: '',
+  secondaryPhone: '',
+  instagramUrl: '',
+  facebookUrl: '',
+  copyrightText: '',
   whatsappNumber: '',
 } as const;

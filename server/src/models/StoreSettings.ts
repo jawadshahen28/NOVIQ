@@ -78,6 +78,26 @@ const storeSettingsSchema = new Schema<StoreSettings>(
       trim: true,
       type: String,
     },
+    secondaryPhone: {
+      default: DEFAULT_STORE_SETTINGS.secondaryPhone,
+      trim: true,
+      type: String,
+    },
+    instagramUrl: {
+      default: DEFAULT_STORE_SETTINGS.instagramUrl,
+      trim: true,
+      type: String,
+    },
+    facebookUrl: {
+      default: DEFAULT_STORE_SETTINGS.facebookUrl,
+      trim: true,
+      type: String,
+    },
+    copyrightText: {
+      default: DEFAULT_STORE_SETTINGS.copyrightText,
+      trim: true,
+      type: String,
+    },
     whatsappNumber: {
       default: DEFAULT_STORE_SETTINGS.whatsappNumber,
       trim: true,

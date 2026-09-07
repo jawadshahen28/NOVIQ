@@ -5,6 +5,10 @@ export interface StoreSettings {
   storeDescription: string;
   whatsappNumber: string;
   storePhone: string;
+  secondaryPhone: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  copyrightText: string;
   heroTitle: string;
   heroDescription: string;
   heroImage: string;
@@ -17,6 +21,10 @@ export const defaultStoreSettings: StoreSettings = {
   storeDescription: 'متجر ساعات مختارة تجمع بين الأناقة والجودة والتفاصيل الراقية.',
   whatsappNumber: '',
   storePhone: '',
+  secondaryPhone: '',
+  instagramUrl: '',
+  facebookUrl: '',
+  copyrightText: '',
   heroTitle: 'ساعة تليق بحضورك.',
   heroDescription:
     'اكتشف مجموعة مختارة من الساعات التي تجمع بين الأناقة، الجودة والتفاصيل التي تصنع الفرق.',
@@ -45,6 +53,10 @@ export function normalizeStoreSettings(value: unknown): StoreSettings {
     storeDescription: readString(candidate.storeDescription, defaultStoreSettings.storeDescription),
     whatsappNumber: readString(candidate.whatsappNumber, defaultStoreSettings.whatsappNumber),
     storePhone: readString(candidate.storePhone, defaultStoreSettings.storePhone),
+    secondaryPhone: readString(candidate.secondaryPhone, defaultStoreSettings.secondaryPhone),
+    instagramUrl: readString(candidate.instagramUrl, defaultStoreSettings.instagramUrl),
+    facebookUrl: readString(candidate.facebookUrl, defaultStoreSettings.facebookUrl),
+    copyrightText: readString(candidate.copyrightText, defaultStoreSettings.copyrightText),
     heroTitle: readRequiredString(candidate.heroTitle, defaultStoreSettings.heroTitle),
     heroDescription: readString(candidate.heroDescription, defaultStoreSettings.heroDescription),
     heroImage: readString(candidate.heroImage, defaultStoreSettings.heroImage),

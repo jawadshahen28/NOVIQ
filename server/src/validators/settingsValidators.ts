@@ -9,6 +9,25 @@ function hasValidPhoneShape(value: string) {
   return /^[+\d\s()-]+$/.test(value.trim()) && digits.length >= 7 && digits.length <= 15;
 }
 
+function hasValidHttpUrl(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return true;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function hasValidWhatsAppValue(value: string) {
+  return hasValidPhoneShape(value) || hasValidHttpUrl(value);
+}
+
 function hasValidImagePath(value: string) {
   const trimmed = value.trim();
 
@@ -52,11 +71,30 @@ export const updateStoreSettingsBodySchema = z
       .max(40)
       .refine(hasValidPhoneShape, 'Store phone is invalid')
       .optional(),
-    whatsappNumber: z
+    secondaryPhone: z
       .string()
       .trim()
       .max(40)
-      .refine(hasValidPhoneShape, 'WhatsApp number is invalid')
+      .refine(hasValidPhoneShape, 'Secondary phone is invalid')
+      .optional(),
+    instagramUrl: z
+      .string()
+      .trim()
+      .max(2_000)
+      .refine(hasValidHttpUrl, 'Instagram URL must be an http or https URL')
+      .optional(),
+    facebookUrl: z
+      .string()
+      .trim()
+      .max(2_000)
+      .refine(hasValidHttpUrl, 'Facebook URL must be an http or https URL')
+      .optional(),
+    copyrightText: z.string().trim().max(300).optional(),
+    whatsappNumber: z
+      .string()
+      .trim()
+      .max(2_000)
+      .refine(hasValidWhatsAppValue, 'WhatsApp number or URL is invalid')
       .optional(),
   })
   .strict()
