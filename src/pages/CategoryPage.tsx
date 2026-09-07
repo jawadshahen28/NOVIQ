@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStoreCatalog } from '../features/store/catalog/StoreCatalogContext';
 import HomeProductCard from '../features/store/components/HomeProductCard';
-import TrustStrip from '../features/store/components/TrustStrip';
 import { getDiscountedPrice } from '../utils/format';
 import { getResponsiveImageProps } from '../utils/responsiveImages';
 
@@ -215,8 +214,6 @@ export default function CategoryPage() {
           )}
         </div>
       </section>
-
-      <TrustStrip />
     </div>
   );
 }
