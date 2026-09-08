@@ -1,7 +1,8 @@
-import { X } from 'lucide-react';
+import { ExternalLink, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { getDeliveryRegionOption } from '../../../../config/delivery';
 import type { AdminOrder, OrderStatus } from '../../../../types/catalog';
+import { createPalestinianWhatsAppHref } from '../../../../utils/contactLinks';
 import { formatCurrency, formatDate } from '../../../../utils/format';
 import StatusBadge from '../../components/StatusBadge';
 
@@ -15,10 +16,6 @@ interface OrderDetailsDrawerProps {
 
 const cancelledStatus: OrderStatus = 'ملغي';
 const unspecifiedText = 'غير محدد';
-
-function phoneHref(phone: string) {
-  return `tel:${phone.replace(/[^\d+]/g, '')}`;
-}
 
 function getDeliveryRegionLabel(order: AdminOrder) {
   return (
@@ -89,6 +86,7 @@ export default function OrderDetailsDrawer({
   const subtotal = getOrderSubtotal(order);
   const deliveryRegionLabel = getDeliveryRegionLabel(order);
   const deliveryFeeLabel = getDeliveryFeeLabel(order);
+  const customerWhatsAppHref = createPalestinianWhatsAppHref(order.phone);
 
   function handleStatusChange(status: OrderStatus) {
     if (status === activeOrder.status) {
@@ -197,13 +195,23 @@ export default function OrderDetailsDrawer({
                 <div className="grid gap-1">
                   <dt className="text-xs font-semibold text-noviq-muted">رقم الهاتف</dt>
                   <dd>
-                    <a
-                      className="text-noviq-secondaryText transition hover:text-noviq-gold"
-                      href={phoneHref(order.phone)}
-                      dir="ltr"
-                    >
-                      {order.phone}
-                    </a>
+                    {customerWhatsAppHref ? (
+                      <a
+                        className="inline-flex items-center gap-1.5 text-noviq-secondaryText transition hover:text-noviq-gold"
+                        data-order-customer-whatsapp-link
+                        dir="ltr"
+                        href={customerWhatsAppHref}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        <span>{order.phone}</span>
+                        <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
+                      </a>
+                    ) : (
+                      <span className="text-noviq-secondaryText" dir="ltr">
+                        {order.phone}
+                      </span>
+                    )}
                   </dd>
                 </div>
                 <div className="grid gap-1">

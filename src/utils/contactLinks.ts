@@ -41,3 +41,29 @@ export function createWhatsAppHref(value: string) {
 
   return digits ? `https://wa.me/${digits}` : '';
 }
+
+export function normalizePalestinianWhatsAppNumber(value: string) {
+  const compactValue = value.trim().replace(/[\s-]/g, '');
+
+  if (!/^\+?\d+$/.test(compactValue)) {
+    return '';
+  }
+
+  const digits = compactValue.startsWith('+') ? compactValue.slice(1) : compactValue;
+
+  if (/^0(?:56|59)\d{7}$/.test(digits)) {
+    return `970${digits.slice(1)}`;
+  }
+
+  if (/^970(?:56|59)\d{7}$/.test(digits)) {
+    return digits;
+  }
+
+  return '';
+}
+
+export function createPalestinianWhatsAppHref(value: string) {
+  const whatsappNumber = normalizePalestinianWhatsAppNumber(value);
+
+  return whatsappNumber ? `https://wa.me/${whatsappNumber}` : '';
+}
