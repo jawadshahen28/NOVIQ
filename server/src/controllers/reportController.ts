@@ -5,6 +5,7 @@ import { businessDayStart, addBusinessDays } from '../config/businessTime.js';
 import { ORDER_STATUSES, type Order } from '../types/models.js';
 import { getDocumentReferenceId } from '../utils/documentReference.js';
 import { LOW_STOCK_THRESHOLD } from '../utils/inventory.js';
+import { getOrderSubtotal } from '../utils/orderTotals.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type { AdminReportQuery } from '../validators/reportValidators.js';
@@ -48,7 +49,7 @@ export const getAdminReportSummary = asyncHandler(async (request, response) => {
   const productMap = new Map(products.map((product) => [product.id, product]));
   const categoryMap = new Map(categories.map((category) => [category.id, category]));
   const revenueOrders = orders.filter(isRevenueOrder);
-  const revenue = revenueOrders.reduce((sum, order) => sum + order.total, 0);
+  const revenue = revenueOrders.reduce((sum, order) => sum + getOrderSubtotal(order), 0);
   const profit = revenueOrders.reduce(
     (sum, order) =>
       sum +

@@ -1,5 +1,6 @@
 import { CheckCircle2, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { getDeliveryRegionOption } from '../config/delivery';
 import {
   clearSubmittedOrderSnapshot,
   loadSubmittedOrderSnapshot,
@@ -10,6 +11,20 @@ import { getOptimizedImageUrl } from '../utils/responsiveImages';
 
 interface SuccessState {
   order?: SubmittedOrderSnapshot;
+}
+
+const unspecifiedText = 'غير محدد';
+
+function getSubmittedDeliveryRegionLabel(order: SubmittedOrderSnapshot) {
+  return (
+    order.deliveryRegionLabel?.trim() ||
+    getDeliveryRegionOption(order.deliveryRegion)?.label ||
+    unspecifiedText
+  );
+}
+
+function getSubmittedDeliveryFee(order: SubmittedOrderSnapshot) {
+  return order.deliveryFee ?? order.shipping;
 }
 
 export default function OrderSuccessPage() {
@@ -45,6 +60,9 @@ export default function OrderSuccessPage() {
     );
   }
 
+  const deliveryFee = getSubmittedDeliveryFee(submittedOrder);
+  const deliveryRegionLabel = getSubmittedDeliveryRegionLabel(submittedOrder);
+
   return (
     <section className="bg-noviq-black py-8 pb-20 sm:py-10 lg:py-12" data-order-success-page>
       <div className="luxury-container">
@@ -59,7 +77,7 @@ export default function OrderSuccessPage() {
             تم استلام طلبك بنجاح
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-7 text-noviq-secondaryText">
-            شكراً لاختيارك NOVIQ، سيتم التواصل معك لتأكيد الطلب. الدفع عند الاستلام.
+            شكرا لاختيارك NOVIQ، سيتم التواصل معك لتأكيد الطلب. الدفع عند الاستلام.
           </p>
 
           <div className="mt-7 grid gap-5 rounded-md border border-noviq-border bg-noviq-secondary p-4 sm:p-5">
@@ -119,15 +137,19 @@ export default function OrderSuccessPage() {
                 </div>
               ) : null}
               <div className="flex items-center justify-between text-noviq-secondaryText">
+                <span>منطقة التوصيل</span>
+                <span>{deliveryRegionLabel}</span>
+              </div>
+              <div className="flex items-center justify-between text-noviq-secondaryText">
                 <span>المجموع الفرعي</span>
                 <span>{formatCurrency(submittedOrder.subtotal)}</span>
               </div>
               <div className="flex items-center justify-between text-noviq-secondaryText">
-                <span>التوصيل</span>
-                <span>{submittedOrder.shipping === 0 ? 'مجاني' : formatCurrency(submittedOrder.shipping)}</span>
+                <span>رسوم التوصيل</span>
+                <span>{formatCurrency(deliveryFee)}</span>
               </div>
               <div className="flex items-center justify-between border-t border-noviq-border pt-4 text-base font-bold text-noviq-text">
-                <span>الإجمالي</span>
+                <span>الإجمالي النهائي</span>
                 <span className="font-semibold text-noviq-gold">
                   {formatCurrency(submittedOrder.total)}
                 </span>

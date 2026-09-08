@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { mongoObjectIdSchema, paginationQuerySchema, slugSchema } from './commonSchemas.js';
+import { DELIVERY_REGION_CODES } from '../config/delivery.js';
 import { ORDER_STATUSES } from '../types/models.js';
 
 const requiredTextSchema = (field: string, max: number) =>
@@ -31,6 +32,7 @@ export const createOrderBodySchema = z.object({
       phone: phoneSchema,
     })
     .strict(),
+  deliveryRegion: z.enum(DELIVERY_REGION_CODES),
   items: z.array(orderItemSchema).min(1).max(50),
 }).strict();
 

@@ -1,8 +1,10 @@
-import { ArrowLeft, Banknote, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Banknote, CheckCircle2, Truck } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import { DELIVERY_REGION_OPTIONS, getDeliveryRegionOption } from '../config/delivery';
+import type { DeliveryRegionCode } from '../config/delivery';
 import { useCart } from '../features/cart/CartContext';
 import CheckoutSummary from '../features/checkout/components/CheckoutSummary';
 import { useStoreSettings } from '../features/store/settings/StoreSettingsContext';
@@ -13,27 +15,36 @@ import { saveSubmittedOrderSnapshot } from '../services/submittedOrderStorage';
 import type { SubmittedOrderSnapshot } from '../types/catalog';
 import { formatCurrency } from '../utils/format';
 
+type CheckoutDeliveryRegion = '' | DeliveryRegionCode;
+
 interface CheckoutFormValues {
   fullName: string;
   phone: string;
   address: string;
+  deliveryRegion: CheckoutDeliveryRegion;
   notes: string;
 }
 
-type CheckoutErrors = Partial<Record<keyof Omit<CheckoutFormValues, 'notes'>, string>>;
+type RequiredCheckoutField = Exclude<keyof CheckoutFormValues, 'notes'>;
+type CheckoutErrors = Partial<Record<RequiredCheckoutField, string>>;
 
 const cashOnDeliveryMethod = 'الدفع عند الاستلام';
 const submissionErrorMessage = 'تعذر إرسال الطلب، يرجى المحاولة مرة أخرى.';
+const deliveryRegionHint = 'مدة التوصيل عادة من يومين إلى ثلاثة أيام.';
 
 const initialFormValues: CheckoutFormValues = {
   fullName: '',
   phone: '',
   address: '',
+  deliveryRegion: '',
   notes: '',
 };
 
 function createSubmittedOrderSnapshot(order: CreatedOrder): SubmittedOrderSnapshot {
   return {
+    deliveryFee: order.deliveryFee,
+    deliveryRegion: order.deliveryRegion,
+    deliveryRegionLabel: order.deliveryRegionLabel,
     items: order.items.map((item) => ({
       image: item.image,
       lineTotal: item.lineTotal,
@@ -61,6 +72,7 @@ export default function CheckoutPage() {
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
+  const selectedDeliveryRegion = getDeliveryRegionOption(formValues.deliveryRegion);
 
   function validateForm(values: CheckoutFormValues) {
     const nextErrors: CheckoutErrors = {};
@@ -75,6 +87,10 @@ export default function CheckoutPage() {
 
     if (!values.address.trim()) {
       nextErrors.address = 'يرجى إدخال العنوان.';
+    }
+
+    if (!getDeliveryRegionOption(values.deliveryRegion)) {
+      nextErrors.deliveryRegion = 'يرجى اختيار منطقة التوصيل.';
     }
 
     return nextErrors;
@@ -106,8 +122,9 @@ export default function CheckoutPage() {
     }
 
     const nextErrors = validateForm(formValues);
+    const deliveryRegion = getDeliveryRegionOption(formValues.deliveryRegion);
 
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(nextErrors).length > 0 || !deliveryRegion) {
       setErrors(nextErrors);
       return;
     }
@@ -125,6 +142,7 @@ export default function CheckoutPage() {
       };
       const { order } = await createOrder({
         customer,
+        deliveryRegion: deliveryRegion.value,
         items: items.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
@@ -146,10 +164,10 @@ export default function CheckoutPage() {
           error.errors?.some((detail) => detail.code === 'orders_closed')
           ? error.message || defaultStoreSettings.closedMessage
           : error instanceof ApiClientError && error.status === 409
-          ? 'الكمية المطلوبة غير متوفرة لأحد المنتجات.'
-          : error instanceof ApiClientError && error.status === 400
-            ? 'يرجى مراجعة بيانات الطلب والمحاولة مرة أخرى.'
-            : submissionErrorMessage,
+            ? 'الكمية المطلوبة غير متوفرة لأحد المنتجات.'
+            : error instanceof ApiClientError && error.status === 400
+              ? 'يرجى مراجعة بيانات الطلب ومنطقة التوصيل والمحاولة مرة أخرى.'
+              : submissionErrorMessage,
       );
     }
   }
@@ -187,7 +205,7 @@ export default function CheckoutPage() {
             إكمال بيانات الطلب
           </h1>
           <p className="mt-3 text-sm text-noviq-secondaryText">
-            إجمالي الطلب الحالي {formatCurrency(subtotal)}
+            المجموع الفرعي الحالي {formatCurrency(subtotal)}
           </p>
           {!settings.ordersOpen ? (
             <p
@@ -278,6 +296,52 @@ export default function CheckoutPage() {
               </label>
             </fieldset>
 
+            <section className="border-t border-noviq-border pt-5" data-delivery-region-section>
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-noviq-gold text-noviq-gold">
+                  <Truck size={20} strokeWidth={1.8} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-heading text-lg font-bold text-noviq-text">
+                    منطقة التوصيل
+                  </h2>
+                  <label className="mt-4 grid gap-2 text-sm font-semibold text-noviq-secondaryText">
+                    <span>اختر منطقة التوصيل</span>
+                    <select
+                      aria-describedby={errors.deliveryRegion ? 'delivery-region-error' : 'delivery-region-hint'}
+                      aria-invalid={Boolean(errors.deliveryRegion)}
+                      className="field"
+                      data-delivery-region-select
+                      onChange={(event) =>
+                        updateField(
+                          'deliveryRegion',
+                          event.target.value as CheckoutFormValues['deliveryRegion'],
+                        )
+                      }
+                      required
+                      value={formValues.deliveryRegion}
+                    >
+                      <option value="">اختر منطقة التوصيل</option>
+                      {DELIVERY_REGION_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label} - {formatCurrency(option.fee)}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.deliveryRegion ? (
+                      <span id="delivery-region-error" className="text-xs font-medium text-noviq-gold">
+                        {errors.deliveryRegion}
+                      </span>
+                    ) : (
+                      <span id="delivery-region-hint" className="text-xs leading-6 text-noviq-muted">
+                        {deliveryRegionHint}
+                      </span>
+                    )}
+                  </label>
+                </div>
+              </div>
+            </section>
+
             <section className="border-t border-noviq-border pt-5" data-payment-static>
               <h2 className="font-heading text-lg font-bold text-noviq-text">طريقة الدفع</h2>
               <div className="mt-4 flex items-start gap-3">
@@ -307,7 +371,7 @@ export default function CheckoutPage() {
 
             <Button
               className="min-h-12 w-full md:w-auto"
-              disabled={isSubmitting || !settings.ordersOpen}
+              disabled={isSubmitting || !settings.ordersOpen || !selectedDeliveryRegion}
               data-confirm-order
               icon={<CheckCircle2 size={18} />}
               type="submit"
@@ -316,7 +380,7 @@ export default function CheckoutPage() {
             </Button>
           </form>
 
-          <CheckoutSummary />
+          <CheckoutSummary deliveryRegion={formValues.deliveryRegion} />
         </div>
       </div>
     </section>

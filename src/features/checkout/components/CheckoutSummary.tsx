@@ -1,12 +1,20 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../cart/CartContext';
+import { getDeliveryRegionOption } from '../../../config/delivery';
 import { formatCurrency, getDiscountedPrice } from '../../../utils/format';
 import { getOptimizedImageUrl } from '../../../utils/responsiveImages';
 
-export default function CheckoutSummary() {
+interface CheckoutSummaryProps {
+  deliveryRegion: string;
+}
+
+const chooseDeliveryRegionText = 'اختر منطقة التوصيل';
+
+export default function CheckoutSummary({ deliveryRegion }: CheckoutSummaryProps) {
   const { items, subtotal } = useCart();
-  const shipping = subtotal > 0 ? 0 : 0;
-  const total = subtotal + shipping;
+  const selectedDeliveryRegion = getDeliveryRegionOption(deliveryRegion);
+  const shipping = selectedDeliveryRegion?.fee;
+  const total = shipping === undefined ? undefined : subtotal + shipping;
 
   return (
     <aside
@@ -52,14 +60,22 @@ export default function CheckoutSummary() {
           <span>المجموع الفرعي</span>
           <span data-checkout-subtotal>{formatCurrency(subtotal)}</span>
         </div>
+        <div className="flex items-center justify-between gap-4 text-noviq-secondaryText">
+          <span>منطقة التوصيل</span>
+          <span className="text-left" data-checkout-delivery-region>
+            {selectedDeliveryRegion?.label ?? chooseDeliveryRegionText}
+          </span>
+        </div>
         <div className="flex items-center justify-between text-noviq-secondaryText">
           <span>التوصيل</span>
-          <span>{shipping === 0 ? 'مجاني' : formatCurrency(shipping)}</span>
+          <span data-checkout-delivery-fee>
+            {shipping === undefined ? chooseDeliveryRegionText : formatCurrency(shipping)}
+          </span>
         </div>
         <div className="flex items-center justify-between border-t border-noviq-border pt-4 text-base font-bold text-noviq-text">
           <span>الإجمالي</span>
           <span className="text-noviq-gold" data-checkout-total>
-            {formatCurrency(total)}
+            {total === undefined ? chooseDeliveryRegionText : formatCurrency(total)}
           </span>
         </div>
       </div>

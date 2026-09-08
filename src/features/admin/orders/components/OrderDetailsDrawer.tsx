@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { getDeliveryRegionOption } from '../../../../config/delivery';
 import type { AdminOrder, OrderStatus } from '../../../../types/catalog';
 import { formatCurrency, formatDate } from '../../../../utils/format';
 import StatusBadge from '../../components/StatusBadge';
@@ -12,8 +13,27 @@ interface OrderDetailsDrawerProps {
   onStatusChange: (orderId: string, status: OrderStatus) => void;
 }
 
+const cancelledStatus: OrderStatus = 'ملغي';
+const unspecifiedText = 'غير محدد';
+
 function phoneHref(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, '')}`;
+}
+
+function getDeliveryRegionLabel(order: AdminOrder) {
+  return (
+    order.deliveryRegionLabel?.trim() ||
+    getDeliveryRegionOption(order.deliveryRegion)?.label ||
+    unspecifiedText
+  );
+}
+
+function getDeliveryFeeLabel(order: AdminOrder) {
+  return formatCurrency(order.deliveryFee ?? order.shipping ?? 0);
+}
+
+function getOrderSubtotal(order: AdminOrder) {
+  return order.subtotal ?? order.items.reduce((sum, item) => sum + item.lineTotal, 0);
 }
 
 export default function OrderDetailsDrawer({
@@ -66,13 +86,16 @@ export default function OrderDetailsDrawer({
   }
 
   const activeOrder = order;
+  const subtotal = getOrderSubtotal(order);
+  const deliveryRegionLabel = getDeliveryRegionLabel(order);
+  const deliveryFeeLabel = getDeliveryFeeLabel(order);
 
   function handleStatusChange(status: OrderStatus) {
     if (status === activeOrder.status) {
       return;
     }
 
-    if (status === 'ملغي') {
+    if (status === cancelledStatus) {
       setPendingCancelStatus(status);
       return;
     }
@@ -234,15 +257,23 @@ export default function OrderDetailsDrawer({
             <section className="rounded-md border border-noviq-border bg-noviq-card p-4">
               <dl className="grid gap-3 text-sm">
                 <div className="flex items-center justify-between gap-4 text-noviq-secondaryText">
+                  <dt>منطقة التوصيل</dt>
+                  <dd className="text-left">{deliveryRegionLabel}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 text-noviq-secondaryText">
+                  <dt>رسوم التوصيل</dt>
+                  <dd>{deliveryFeeLabel}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 text-noviq-secondaryText">
                   <dt>المجموع الفرعي</dt>
-                  <dd>{formatCurrency(order.subtotal)}</dd>
+                  <dd>{formatCurrency(subtotal)}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4 text-noviq-secondaryText">
                   <dt>طريقة الدفع</dt>
                   <dd>{order.paymentMethod}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4 border-t border-noviq-border pt-4 text-base font-bold text-noviq-text">
-                  <dt>الإجمالي</dt>
+                  <dt>الإجمالي النهائي</dt>
                   <dd className="text-noviq-gold">{formatCurrency(order.total)}</dd>
                 </div>
               </dl>
@@ -264,7 +295,7 @@ export default function OrderDetailsDrawer({
               هل أنت متأكد من إلغاء هذا الطلب؟
             </p>
             <p className="mt-2 text-sm leading-7 text-noviq-secondaryText">
-              سيبقى الطلب ظاهرًا في السجل بحالة ملغي.
+              سيبقى الطلب ظاهرا في السجل بحالة ملغي.
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <button

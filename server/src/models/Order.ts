@@ -1,4 +1,5 @@
 import { Schema, Types, model } from 'mongoose';
+import { DELIVERY_REGION_CODES } from '../config/delivery.js';
 import { createOrderNumberFromObjectId } from '../utils/orderNumber.js';
 import { ORDER_STATUSES, PAYMENT_METHODS, type Order } from '../types/models.js';
 
@@ -97,6 +98,19 @@ const orderSchema = new Schema<Order>(
     orderNumber: {
       trim: true,
       type: String,
+    },
+    deliveryRegion: {
+      enum: [...DELIVERY_REGION_CODES],
+      trim: true,
+      type: String,
+    },
+    deliveryRegionLabel: {
+      trim: true,
+      type: String,
+    },
+    deliveryFee: {
+      min: [0, 'Delivery fee must be greater than or equal to 0'],
+      type: Number,
     },
     paymentMethod: {
       default: 'cash_on_delivery',

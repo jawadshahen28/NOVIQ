@@ -24,6 +24,9 @@ function isSubmittedOrderSnapshot(value: unknown): value is SubmittedOrderSnapsh
         Number.isFinite(item.unitPrice) &&
         Number.isFinite(item.lineTotal),
     ) &&
+    (snapshot.deliveryRegion === undefined || typeof snapshot.deliveryRegion === 'string') &&
+    (snapshot.deliveryRegionLabel === undefined || typeof snapshot.deliveryRegionLabel === 'string') &&
+    (snapshot.deliveryFee === undefined || Number.isFinite(snapshot.deliveryFee)) &&
     Number.isFinite(snapshot.subtotal) &&
     Number.isFinite(snapshot.shipping) &&
     Number.isFinite(snapshot.total) &&

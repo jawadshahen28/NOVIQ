@@ -1,5 +1,6 @@
 import { apiRequest } from './apiClient';
 import type { AdminOrder, OrderStatus } from '../types/catalog';
+import type { DeliveryRegionCode } from '../config/delivery';
 
 export interface CreateOrderInput {
   customer: {
@@ -8,6 +9,7 @@ export interface CreateOrderInput {
     address: string;
     notes?: string;
   };
+  deliveryRegion: DeliveryRegionCode;
   items: Array<{
     productId: string;
     quantity: number;
@@ -15,6 +17,9 @@ export interface CreateOrderInput {
 }
 
 export interface CreatedOrder extends AdminOrder {
+  deliveryFee: number;
+  deliveryRegion: DeliveryRegionCode;
+  deliveryRegionLabel: string;
   shipping: number;
   paymentMethodCode: 'cash_on_delivery';
 }

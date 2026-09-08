@@ -1,4 +1,5 @@
 import mongoose, { Types } from 'mongoose';
+import { getDeliveryRegionConfig } from '../config/delivery.js';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
 import { DEFAULT_STORE_SETTINGS } from '../config/storeSettings.js';
@@ -8,6 +9,7 @@ import { AppError } from '../utils/AppError.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { serializeOrder } from '../utils/orderSerializer.js';
+import { calculateOrderPricing } from '../utils/orderTotals.js';
 import { escapeRegex } from '../utils/slug.js';
 import { ORDER_STATUSES } from '../types/models.js';
 import type {
@@ -76,6 +78,7 @@ function createOrderItem(product: Product & { _id: Types.ObjectId }, quantity: n
 export const createOrder = asyncHandler(async (request, response) => {
   const body = request.body as CreateOrderBody;
   const settings = await getStoreSettingsDocument();
+  const deliveryRegion = getDeliveryRegionConfig(body.deliveryRegion);
 
   if (!settings.ordersOpen) {
     const message = settings.closedMessage || DEFAULT_STORE_SETTINGS.closedMessage;
@@ -116,8 +119,7 @@ export const createOrder = asyncHandler(async (request, response) => {
         orderItems.push(createOrderItem(product, item.quantity));
       }
 
-      const subtotal = orderItems.reduce((sum, item) => sum + item.lineTotal, 0);
-      const shipping = 0;
+      const pricing = calculateOrderPricing(orderItems, deliveryRegion.fee);
       const customer: Order['customer'] = {
         address: body.customer.address,
         name: body.customer.name,
@@ -130,11 +132,14 @@ export const createOrder = asyncHandler(async (request, response) => {
 
       const order = new OrderModel({
         customer,
+        deliveryFee: pricing.deliveryFee,
+        deliveryRegion: deliveryRegion.code,
+        deliveryRegionLabel: deliveryRegion.label,
         items: orderItems,
         paymentMethod: 'cash_on_delivery',
-        shipping,
-        subtotal,
-        total: subtotal + shipping,
+        shipping: pricing.shipping,
+        subtotal: pricing.subtotal,
+        total: pricing.total,
       });
 
       await order.save({ session });

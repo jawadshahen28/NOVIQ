@@ -1,3 +1,5 @@
+import type { DeliveryRegionCode } from '../config/delivery';
+
 export type CategorySlug = string;
 
 export interface Category {
@@ -48,6 +50,9 @@ export interface SubmittedOrderItem {
 export interface SubmittedOrderSnapshot {
   orderNumber?: string;
   items: SubmittedOrderItem[];
+  deliveryRegion?: DeliveryRegionCode;
+  deliveryRegionLabel?: string;
+  deliveryFee?: number;
   subtotal: number;
   shipping: number;
   total: number;
@@ -75,7 +80,11 @@ export interface AdminOrder {
   address: string;
   notes?: string;
   items: AdminOrderItem[];
+  deliveryRegion?: DeliveryRegionCode;
+  deliveryRegionLabel?: string;
+  deliveryFee?: number;
   subtotal: number;
+  shipping?: number;
   total: number;
   status: OrderStatus;
   createdAt: string;

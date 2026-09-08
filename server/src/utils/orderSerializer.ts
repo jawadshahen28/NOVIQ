@@ -1,5 +1,7 @@
 import type { HydratedDocument } from 'mongoose';
 import type { Order } from '../types/models.js';
+import { resolveDeliveryRegionConfig } from '../config/delivery.js';
+import { getOrderDeliveryFee, getOrderSubtotal, getOrderTotal } from './orderTotals.js';
 
 const cashOnDeliveryLabel =
   '\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645';
@@ -20,6 +22,9 @@ export interface SerializedOrder {
     unitPrice: number;
     lineTotal: number;
   }>;
+  deliveryRegion?: Order['deliveryRegion'];
+  deliveryRegionLabel?: string;
+  deliveryFee?: number;
   subtotal: number;
   shipping: number;
   total: number;
@@ -37,6 +42,11 @@ function toIsoDate(value: Date | undefined) {
 export function serializeOrder(order: HydratedDocument<Order>): SerializedOrder {
   const notes = order.customer.notes?.trim();
   const createdAt = toIsoDate(order.createdAt) ?? new Date().toISOString();
+  const subtotal = getOrderSubtotal(order);
+  const deliveryFee = getOrderDeliveryFee(order);
+  const total = getOrderTotal(order);
+  const deliveryRegionConfig = resolveDeliveryRegionConfig(order.deliveryRegion);
+  const deliveryRegionLabel = order.deliveryRegionLabel?.trim() || deliveryRegionConfig?.label;
   const serialized: SerializedOrder = {
     address: order.customer.address,
     createdAt,
@@ -55,11 +65,20 @@ export function serializeOrder(order: HydratedDocument<Order>): SerializedOrder 
     paymentMethod: cashOnDeliveryLabel,
     paymentMethodCode: order.paymentMethod,
     phone: order.customer.phone,
-    shipping: order.shipping,
+    shipping: deliveryFee,
     status: order.status,
-    subtotal: order.subtotal,
-    total: order.total,
+    subtotal,
+    total,
   };
+
+  if (deliveryRegionConfig) {
+    serialized.deliveryRegion = deliveryRegionConfig.code;
+  }
+
+  if (deliveryRegionLabel) {
+    serialized.deliveryRegionLabel = deliveryRegionLabel;
+    serialized.deliveryFee = deliveryFee;
+  }
 
   if (notes) {
     serialized.notes = notes;

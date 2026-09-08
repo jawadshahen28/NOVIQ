@@ -6,6 +6,7 @@ import { businessDayStart, businessDateKey, addBusinessDays } from '../config/bu
 import { getDocumentReferenceId } from '../utils/documentReference.js';
 import { LOW_STOCK_THRESHOLD } from '../utils/inventory.js';
 import { isRevenueStatus } from '../utils/metrics.js';
+import { getOrderSubtotal, getOrderTotal } from '../utils/orderTotals.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -33,19 +34,19 @@ export const getAdminDashboard = asyncHandler(async (_request, response) => {
     const date = addBusinessDays(sevenDaysAgo, index);
     const key = businessDateKey(date);
     const dayOrders = orders.filter((order) => order.createdAt && businessDateKey(order.createdAt) === key && isRevenueStatus(order.status));
-    return { label: key.slice(5), value: dayOrders.reduce((sum, order) => sum + order.total, 0) };
+    return { label: key.slice(5), value: dayOrders.reduce((sum, order) => sum + getOrderSubtotal(order), 0) };
   });
   const categoryNames = new Map(categories.map((category) => [category.id, category.name]));
   const data = {
     kpis: {
-      salesToday: todayOrders.filter((order) => isRevenueStatus(order.status)).reduce((sum, order) => sum + order.total, 0),
+      salesToday: todayOrders.filter((order) => isRevenueStatus(order.status)).reduce((sum, order) => sum + getOrderSubtotal(order), 0),
       ordersToday: todayOrders.length,
       pendingOrders: orders.filter((order) => order.status === 'جديد' || order.status === 'تم التأكيد').length,
       lowStockProducts: products.filter((product) => product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD).length,
       visitorsToday: todayVisitors.length,
     },
     orderMetrics: ['جديد', 'تم التأكيد', 'قيد التجهيز', 'مكتمل', 'ملغي'].map((status) => ({ status, count: orders.filter((order) => order.status === status).length })),
-    recentOrders: allRecentOrders.map((order) => ({ id: order.id, customerName: order.customer.name, itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0), total: order.total, status: order.status, createdAt: order.createdAt })),
+    recentOrders: allRecentOrders.map((order) => ({ id: order.id, customerName: order.customer.name, itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0), total: getOrderTotal(order), status: order.status, createdAt: order.createdAt })),
     salesTrend,
     topProducts: Array.from(productSales.entries()).sort((a, b) => b[1].unitsSold - a[1].unitsSold).slice(0, 5).map(([id, item]) => ({ id, ...item, categoryName: categoryNames.get(getDocumentReferenceId(products.find((product) => product.id === id)?.category)) ?? 'غير مصنف' })),
     lowStock: products.filter((product) => product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD).sort((a, b) => a.stock - b.stock).slice(0, 8).map((product) => ({ id: product.id, name: product.name, image: product.primaryImage || product.images[0], stock: product.stock, categoryName: categoryNames.get(getDocumentReferenceId(product.category)) ?? 'غير مصنف' })),
