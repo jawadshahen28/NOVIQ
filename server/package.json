@@ -7,8 +7,10 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
+    "audit:production-data": "tsx src/scripts/resetProductionData.ts",
     "create-admin": "tsx src/scripts/createAdmin.ts",
     "ensure:indexes": "tsx src/scripts/ensureIndexes.ts",
+    "reset:production-data": "tsx src/scripts/resetProductionData.ts --execute --confirm-clean-launch",
     "seed:catalog": "tsx src/scripts/seedCatalog.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit -p tsconfig.json"
