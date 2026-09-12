@@ -32,11 +32,13 @@ function getProductPrice(body: Pick<CreateProductBody | UpdateProductBody, 'pric
 }
 
 function assertValidCompareAtPrice(sellingPrice: number, compareAtPrice: number | null | undefined) {
-  if (compareAtPrice !== null && compareAtPrice !== undefined && compareAtPrice < sellingPrice) {
-    throw new AppError('Compare-at price must be greater than or equal to price', 400, [
+  if (compareAtPrice !== null && compareAtPrice !== undefined && compareAtPrice <= sellingPrice) {
+    const message = 'السعر قبل الخصم يجب أن يكون أكبر من سعر البيع أو اتركه فارغا';
+
+    throw new AppError(message, 400, [
       {
         code: 'too_small',
-        message: 'Compare-at price must be greater than or equal to price',
+        message,
         path: 'compareAtPrice',
       },
     ]);

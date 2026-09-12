@@ -18,9 +18,9 @@ const productSchema = new Schema<Product>(
       min: [0, 'Compare-at price must be greater than or equal to 0'],
       type: Number,
       validate: {
-        message: 'Compare-at price must be greater than or equal to price',
-        validator(this: Product, value?: number) {
-          return value === undefined || value >= this.price;
+        message: 'Compare-at price must be greater than price',
+        validator(this: Product, value?: number | null) {
+          return value === undefined || value === null || value > this.price;
         },
       },
     },

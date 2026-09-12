@@ -53,7 +53,7 @@ export interface Product extends TimestampFields {
   shortDescription?: string;
   description: string;
   price: number;
-  compareAtPrice?: number;
+  compareAtPrice?: number | null;
   costPrice: number;
   stock: number;
   images: string[];

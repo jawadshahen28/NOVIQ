@@ -130,16 +130,28 @@ export async function uploadCatalogImage(file: File, type: 'category' | 'product
   });
 }
 function toProductPayload(product: Product) {
+  const compareAtPrice =
+    product.compareAtPrice !== undefined
+      ? product.compareAtPrice
+      : product.discountPercent > 0
+        ? product.price
+        : null;
+  const sellingPrice =
+    product.sellingPrice ??
+    (product.discountPercent > 0
+      ? Math.round(product.price * (1 - product.discountPercent / 100))
+      : product.price);
+
   return {
     categoryId: product.categoryId,
     category: product.categoryId ? undefined : product.category,
-    compareAtPrice: product.discountPercent > 0 ? product.price : null,
+    compareAtPrice,
     costPrice: product.costPrice,
     description: product.description,
     images: product.images,
     isActive: product.isActive ?? product.isAvailable,
     name: product.name,
-    price: product.sellingPrice ?? Math.round(product.price * (1 - product.discountPercent / 100)),
+    price: sellingPrice,
     primaryImage: product.images[0],
     shortDescription: product.shortDescription,
     slug: product.slug,

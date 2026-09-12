@@ -13,8 +13,43 @@ const requiredTextSchema = (field: string, max: number) =>
   z.string().trim().min(1, `${field} is required`).max(max);
 
 const moneySchema = z.coerce.number().min(0.01).max(1_000_000);
-const nullableMoneySchema = z.union([z.coerce.number().min(0).max(1_000_000), z.null()]).optional();
+const nullableMoneySchema = z.preprocess(
+  (value) => {
+    if (typeof value === 'string' && value.trim() === '') {
+      return null;
+    }
+
+    return value;
+  },
+  z.union([z.null(), z.coerce.number().min(0).max(1_000_000)]).optional(),
+);
 const specificationsSchema = z.record(z.string().trim().min(1).max(80), z.string().trim().max(500));
+const compareAtPriceValidationMessage =
+  'السعر قبل الخصم يجب أن يكون أكبر من سعر البيع أو اتركه فارغا';
+
+function validateCompareAtPrice(
+  value: {
+    compareAtPrice?: number | null | undefined;
+    price?: number | undefined;
+    sellingPrice?: number | undefined;
+  },
+  context: z.RefinementCtx,
+) {
+  const sellingPrice = value.sellingPrice ?? value.price;
+
+  if (
+    sellingPrice !== undefined &&
+    value.compareAtPrice !== null &&
+    value.compareAtPrice !== undefined &&
+    value.compareAtPrice <= sellingPrice
+  ) {
+    context.addIssue({
+      code: 'custom',
+      message: compareAtPriceValidationMessage,
+      path: ['compareAtPrice'],
+    });
+  }
+}
 
 export const resourceIdParamsSchema = z.object({
   id: mongoObjectIdSchema,
@@ -78,12 +113,12 @@ export const createProductBodySchema = productFieldsSchema
   .refine((value) => value.price || value.sellingPrice, {
     message: 'Product price is required',
     path: ['price'],
-  });
+  })
+  .superRefine(validateCompareAtPrice);
 
-export const updateProductBodySchema = productFieldsSchema.refine(
-  (value) => Object.keys(value).length > 0,
-  'At least one product field is required',
-);
+export const updateProductBodySchema = productFieldsSchema
+  .refine((value) => Object.keys(value).length > 0, 'At least one product field is required')
+  .superRefine(validateCompareAtPrice);
 
 export const updateProductStockBodySchema = z.object({
   stock: z.coerce.number().int().min(0),

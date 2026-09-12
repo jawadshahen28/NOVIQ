@@ -94,11 +94,15 @@ export function getCategoryName(categoryMap: Map<CategorySlug, string>, slug: Ca
 }
 
 export function getProductCompareAtPrice(product: Product) {
-  if (product.compareAtPrice !== undefined) {
-    return product.compareAtPrice;
-  }
+  const sellingPrice = product.sellingPrice ?? getProductSellingPrice(product);
+  const compareAtPrice =
+    product.compareAtPrice !== undefined
+      ? product.compareAtPrice
+      : product.discountPercent > 0
+        ? product.price
+        : null;
 
-  return product.discountPercent > 0 ? product.price : null;
+  return compareAtPrice && compareAtPrice > sellingPrice ? compareAtPrice : null;
 }
 
 export function getProductSellingPrice(product: Product) {
@@ -212,9 +216,9 @@ export function validateProductForm(values: ProductFormValues) {
 
   if (
     values.compareAtPrice.trim() &&
-    (compareAtPrice === null || !Number.isFinite(compareAtPrice) || compareAtPrice < sellingPrice)
+    (compareAtPrice === null || !Number.isFinite(compareAtPrice) || compareAtPrice <= sellingPrice)
   ) {
-    errors.compareAtPrice = 'السعر قبل الخصم يجب أن يكون أكبر من أو يساوي سعر البيع';
+    errors.compareAtPrice = 'السعر قبل الخصم يجب أن يكون أكبر من سعر البيع أو اتركه فارغا';
   }
 
   if (!values.costPrice.trim() || !Number.isFinite(costPrice) || costPrice < 0) {
@@ -252,6 +256,7 @@ export function createProductFromForm(values: ProductFormValues, existingProduct
     category: values.category as CategorySlug,
     description: values.description.trim(),
     price,
+    compareAtPrice,
     sellingPrice,
     costPrice,
     discountPercent,

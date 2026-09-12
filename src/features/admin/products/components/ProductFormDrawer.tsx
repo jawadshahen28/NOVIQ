@@ -347,7 +347,7 @@ export default function ProductFormDrawer({
                   </label>
 
                   <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
-                    <span>السعر قبل الخصم</span>
+                    <span>السعر قبل الخصم (اختياري)</span>
                     <input
                       aria-describedby={errors.compareAtPrice ? getFieldErrorId('compareAtPrice') : undefined}
                       aria-invalid={Boolean(errors.compareAtPrice)}
