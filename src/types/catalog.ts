@@ -60,7 +60,27 @@ export interface SubmittedOrderSnapshot {
   submittedAt: string;
 }
 
-export type OrderStatus = 'جديد' | 'تم التأكيد' | 'قيد التجهيز' | 'مكتمل' | 'ملغي';
+export const activeOrderStatuses = [
+  'جديد',
+  'تم الاستلام',
+  'تم التجهيز وبانتظار التوصيل',
+  'تم التسليم',
+] as const;
+
+export const legacyOrderStatuses = [
+  'تم التأكيد',
+  'قيد التجهيز',
+  'مكتمل',
+  'ملغي',
+] as const;
+
+export const orderStatuses = [
+  ...activeOrderStatuses,
+  ...legacyOrderStatuses,
+] as const;
+
+export type ActiveOrderStatus = (typeof activeOrderStatuses)[number];
+export type OrderStatus = (typeof orderStatuses)[number];
 
 export interface AdminOrderItem {
   productId: string;
@@ -87,6 +107,8 @@ export interface AdminOrder {
   shipping?: number;
   total: number;
   status: OrderStatus;
+  deletedAt?: string;
+  deletedBy?: string;
   createdAt: string;
   paymentMethod: string;
 }

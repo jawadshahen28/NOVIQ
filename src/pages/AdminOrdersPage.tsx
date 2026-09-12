@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import OrderDetailsDrawer from '../features/admin/orders/components/OrderDetailsDrawer';
 import OrdersFilters, {
-  type OrderDateFilter,
   type OrderStatusFilter,
 } from '../features/admin/orders/components/OrdersFilters';
 import OrdersMobileCards from '../features/admin/orders/components/OrdersMobileCards';
@@ -10,62 +9,19 @@ import OrdersSummary, {
 } from '../features/admin/orders/components/OrdersSummary';
 import OrdersTable from '../features/admin/orders/components/OrdersTable';
 import { ApiClientError } from '../services/apiClient';
-import { listAdminOrders, updateAdminOrderStatus } from '../services/orderApi';
-import type { AdminOrder, OrderStatus } from '../types/catalog';
+import {
+  deleteAdminOrder,
+  listAdminOrders,
+  updateAdminOrderStatus,
+} from '../services/orderApi';
+import {
+  activeOrderStatuses,
+  type ActiveOrderStatus,
+  type AdminOrder,
+} from '../types/catalog';
+import { formatBusinessDateLabel, getBusinessDateInputValue } from '../utils/businessDate';
 
-const orderStatuses: OrderStatus[] = ['جديد', 'تم التأكيد', 'قيد التجهيز', 'مكتمل', 'ملغي'];
-
-function normalizeSearchValue(value: string) {
-  return value.trim().toLowerCase();
-}
-
-function normalizePhoneValue(value: string) {
-  return value.replace(/[^\d]/g, '');
-}
-
-function startOfDay(date: Date) {
-  const nextDate = new Date(date);
-  nextDate.setHours(0, 0, 0, 0);
-  return nextDate;
-}
-
-function endOfDay(date: Date) {
-  const nextDate = new Date(date);
-  nextDate.setHours(23, 59, 59, 999);
-  return nextDate;
-}
-
-function getReferenceDate(orders: AdminOrder[]) {
-  const latestTimestamp = Math.max(...orders.map((order) => new Date(order.createdAt).getTime()));
-
-  return Number.isFinite(latestTimestamp) ? new Date(latestTimestamp) : new Date();
-}
-
-function isWithinDateFilter(order: AdminOrder, filter: OrderDateFilter, referenceDate: Date) {
-  if (filter === 'all') {
-    return true;
-  }
-
-  const orderDate = new Date(order.createdAt);
-  const referenceStart = startOfDay(referenceDate);
-  const referenceEnd = endOfDay(referenceDate);
-
-  if (filter === 'today') {
-    return orderDate >= referenceStart && orderDate <= referenceEnd;
-  }
-
-  if (filter === 'last-7-days') {
-    const sevenDaysStart = new Date(referenceStart);
-    sevenDaysStart.setDate(sevenDaysStart.getDate() - 6);
-
-    return orderDate >= sevenDaysStart && orderDate <= referenceEnd;
-  }
-
-  return (
-    orderDate.getFullYear() === referenceDate.getFullYear() &&
-    orderDate.getMonth() === referenceDate.getMonth()
-  );
-}
+const orderStatuses = [...activeOrderStatuses];
 
 function createSummaryCounts(orders: AdminOrder[]): OrderSummaryCounts {
   const counts = orderStatuses.reduce(
@@ -74,37 +30,15 @@ function createSummaryCounts(orders: AdminOrder[]): OrderSummaryCounts {
   );
 
   orders.forEach((order) => {
-    counts[order.status] += 1;
+    counts[order.status] = (counts[order.status] ?? 0) + 1;
   });
 
   return counts;
 }
 
-function filterOrders(
-  orders: AdminOrder[],
-  searchTerm: string,
-  statusFilter: OrderStatusFilter,
-  dateFilter: OrderDateFilter,
-  referenceDate: Date,
-) {
-  const normalizedSearch = normalizeSearchValue(searchTerm);
-  const normalizedPhoneSearch = normalizePhoneValue(searchTerm);
-
+function filterOrders(orders: AdminOrder[], statusFilter: OrderStatusFilter) {
   return orders
-    .filter((order) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        normalizeSearchValue(order.orderNumber).includes(normalizedSearch) ||
-        normalizeSearchValue(order.customerName).includes(normalizedSearch) ||
-        order.phone.includes(normalizedSearch) ||
-        (normalizedPhoneSearch.length > 0 &&
-          normalizePhoneValue(order.phone).includes(normalizedPhoneSearch));
-
-      const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-      const matchesDate = isWithinDateFilter(order, dateFilter, referenceDate);
-
-      return matchesSearch && matchesStatus && matchesDate;
-    })
+    .filter((order) => statusFilter === 'all' || order.status === statusFilter)
     .sort(
       (first, second) =>
         new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime(),
@@ -112,32 +46,43 @@ function filterOrders(
 }
 
 export default function AdminOrdersPage() {
+  const todayDate = useMemo(() => getBusinessDateInputValue(), []);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>('all');
-  const [dateFilter, setDateFilter] = useState<OrderDateFilter>('all');
+  const [selectedDate, setSelectedDate] = useState(todayDate);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [statusFeedback, setStatusFeedback] = useState('');
 
-  const referenceDate = useMemo(() => getReferenceDate(orders), [orders]);
   const summaryCounts = useMemo(() => createSummaryCounts(orders), [orders]);
   const visibleOrders = useMemo(
-    () => filterOrders(orders, searchTerm, statusFilter, dateFilter, referenceDate),
-    [dateFilter, orders, referenceDate, searchTerm, statusFilter],
+    () => filterOrders(orders, statusFilter),
+    [orders, statusFilter],
   );
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) ?? null,
     [orders, selectedOrderId],
   );
-  const hasActiveFilters = Boolean(searchTerm.trim()) || statusFilter !== 'all' || dateFilter !== 'all';
-  const emptyMessage = orders.length === 0 ? 'لا توجد طلبات حالياً' : 'لا توجد طلبات مطابقة';
+  const selectedDateLabel = useMemo(
+    () => formatBusinessDateLabel(selectedDate),
+    [selectedDate],
+  );
+  const hasActiveFilters =
+    Boolean(searchTerm.trim()) || statusFilter !== 'all' || selectedDate !== todayDate;
+  const emptyMessage = orders.length === 0
+    ? 'لا توجد طلبات في التاريخ المحدد'
+    : 'لا توجد طلبات مطابقة';
 
   useEffect(() => {
     let isMounted = true;
 
-    listAdminOrders()
+    setIsLoading(true);
+    listAdminOrders({
+      date: selectedDate,
+      search: searchTerm,
+    })
       .then(({ orders: fetchedOrders }) => {
         if (isMounted) {
           setOrders(fetchedOrders);
@@ -158,15 +103,25 @@ export default function AdminOrdersPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [searchTerm, selectedDate]);
+
+  useEffect(() => {
+    if (selectedOrderId && !selectedOrder) {
+      setSelectedOrderId(null);
+    }
+  }, [selectedOrder, selectedOrderId]);
 
   function resetFilters() {
     setSearchTerm('');
     setStatusFilter('all');
-    setDateFilter('all');
+    setSelectedDate(todayDate);
   }
 
-  async function updateOrderStatus(orderId: string, status: OrderStatus) {
+  function updateSelectedDate(value: string) {
+    setSelectedDate(value || todayDate);
+  }
+
+  async function updateOrderStatus(orderId: string, status: ActiveOrderStatus) {
     try {
       const { order } = await updateAdminOrderStatus(orderId, status);
       setOrders((currentOrders) =>
@@ -179,6 +134,16 @@ export default function AdminOrdersPage() {
           ? 'لا يمكن تحديث حالة الطلب بهذا الانتقال.'
           : 'تعذر تحديث حالة الطلب، يرجى المحاولة مرة أخرى.',
       );
+    }
+  }
+
+  async function deleteOrder(orderId: string) {
+    try {
+      await deleteAdminOrder(orderId);
+      setOrders((currentOrders) => currentOrders.filter((order) => order.id !== orderId));
+      closeOrder();
+    } catch {
+      setStatusFeedback('تعذر حذف الطلب، يرجى المحاولة مرة أخرى.');
     }
   }
 
@@ -201,24 +166,25 @@ export default function AdminOrdersPage() {
             الطلبات
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-noviq-secondaryText">
-            إدارة ومتابعة طلبات العملاء
+            إدارة ومتابعة طلبات اليوم المحدد حسب توقيت NOVIQ.
           </p>
         </div>
         <p className="w-fit rounded-md border border-noviq-border bg-noviq-card px-4 py-3 text-sm font-semibold text-noviq-secondaryText">
-          إجمالي الطلبات: {orders.length}
+          إجمالي طلبات {selectedDateLabel}: {orders.length}
         </p>
       </div>
 
       <OrdersSummary counts={summaryCounts} statuses={orderStatuses} />
 
       <OrdersFilters
-        dateFilter={dateFilter}
         hasActiveFilters={hasActiveFilters}
-        onDateFilterChange={setDateFilter}
+        onDateChange={updateSelectedDate}
         onReset={resetFilters}
         onSearchChange={setSearchTerm}
         onStatusFilterChange={setStatusFilter}
         searchTerm={searchTerm}
+        selectedDate={selectedDate}
+        selectedDateLabel={selectedDateLabel}
         statusFilter={statusFilter}
         statuses={orderStatuses}
       />
@@ -252,6 +218,7 @@ export default function AdminOrdersPage() {
       <OrderDetailsDrawer
         feedback={statusFeedback}
         onClose={closeOrder}
+        onDelete={deleteOrder}
         onStatusChange={updateOrderStatus}
         order={selectedOrder}
         statuses={orderStatuses}

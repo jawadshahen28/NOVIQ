@@ -26,7 +26,7 @@ export default function AdminDashboardPage() {
   const cards = [
     ['مبيعات اليوم', formatCurrency(data.kpis.salesToday)],
     ['طلبات اليوم', data.kpis.ordersToday],
-    ['طلبات جديدة ومؤكدة', data.kpis.pendingOrders],
+    ['طلبات قيد المتابعة', data.kpis.pendingOrders],
     ['مخزون منخفض', data.kpis.lowStockProducts],
     ['زوار اليوم', data.kpis.visitorsToday],
   ];

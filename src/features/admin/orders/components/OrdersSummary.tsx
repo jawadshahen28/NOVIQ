@@ -1,10 +1,10 @@
-import type { OrderStatus } from '../../../../types/catalog';
+import type { ActiveOrderStatus, OrderStatus } from '../../../../types/catalog';
 
-export type OrderSummaryCounts = Record<'all' | OrderStatus, number>;
+export type OrderSummaryCounts = Record<'all', number> & Partial<Record<OrderStatus, number>>;
 
 interface OrdersSummaryProps {
   counts: OrderSummaryCounts;
-  statuses: OrderStatus[];
+  statuses: ActiveOrderStatus[];
 }
 
 export default function OrdersSummary({ counts, statuses }: OrdersSummaryProps) {
@@ -24,7 +24,7 @@ export default function OrdersSummary({ counts, statuses }: OrdersSummaryProps) 
           key={status}
         >
           <p className="text-xs font-semibold text-noviq-secondaryText">{status}</p>
-          <p className="mt-2 text-2xl font-bold leading-none text-noviq-text">{counts[status]}</p>
+          <p className="mt-2 text-2xl font-bold leading-none text-noviq-text">{counts[status] ?? 0}</p>
         </article>
       ))}
     </div>

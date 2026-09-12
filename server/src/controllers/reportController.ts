@@ -1,10 +1,11 @@
 import { CategoryModel } from '../models/Category.js';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
-import { businessDayStart, addBusinessDays } from '../config/businessTime.js';
-import { ORDER_STATUSES, type Order } from '../types/models.js';
+import { addBusinessDays, businessDayStart } from '../config/businessTime.js';
+import { ACTIVE_ORDER_STATUSES, type Order } from '../types/models.js';
 import { getDocumentReferenceId } from '../utils/documentReference.js';
 import { LOW_STOCK_THRESHOLD } from '../utils/inventory.js';
+import { isRevenueStatus } from '../utils/metrics.js';
 import { getOrderSubtotal } from '../utils/orderTotals.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -20,13 +21,13 @@ function getRangeStart(range: AdminReportQuery['range']) {
 }
 
 function isRevenueOrder(order: Order) {
-  return order.status !== '\u0645\u0644\u063a\u064a';
+  return isRevenueStatus(order.status);
 }
 
 function getStatusSummary(orders: Order[]) {
   const total = Math.max(orders.length, 1);
 
-  return ORDER_STATUSES.map((status) => {
+  return ACTIVE_ORDER_STATUSES.map((status) => {
     const count = orders.filter((order) => order.status === status).length;
 
     return {
@@ -40,7 +41,10 @@ function getStatusSummary(orders: Order[]) {
 export const getAdminReportSummary = asyncHandler(async (request, response) => {
   const { range } = request.query as AdminReportQuery;
   const rangeStart = getRangeStart(range);
-  const orderFilter = rangeStart ? { createdAt: { $gte: rangeStart } } : {};
+  const orderFilter = {
+    deletedAt: null,
+    ...(rangeStart ? { createdAt: { $gte: rangeStart } } : {}),
+  };
   const [orders, products, categories] = await Promise.all([
     OrderModel.find(orderFilter),
     ProductModel.find({}).populate('category'),

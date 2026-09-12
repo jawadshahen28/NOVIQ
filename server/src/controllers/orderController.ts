@@ -1,4 +1,5 @@
 import mongoose, { Types } from 'mongoose';
+import { businessDateRangeFromKey } from '../config/businessTime.js';
 import { getDeliveryRegionConfig } from '../config/delivery.js';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
@@ -9,9 +10,13 @@ import { AppError } from '../utils/AppError.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { serializeOrder } from '../utils/orderSerializer.js';
+import {
+  legacyCompletedStatus,
+  shouldRestoreStockOnSoftDelete,
+} from '../utils/metrics.js';
 import { calculateOrderPricing } from '../utils/orderTotals.js';
 import { escapeRegex } from '../utils/slug.js';
-import { ORDER_STATUSES } from '../types/models.js';
+import { ACTIVE_ORDER_STATUSES } from '../types/models.js';
 import type {
   AdminOrderListQuery,
   CreateOrderBody,
@@ -19,6 +24,7 @@ import type {
 } from '../validators/orderValidators.js';
 
 const orderNotFoundMessage = 'Order not found';
+const notDeletedOrderFilter = { deletedAt: null } as const;
 
 interface NormalizedOrderItem {
   productId?: string | undefined;
@@ -73,6 +79,16 @@ function createOrderItem(product: Product & { _id: Types.ObjectId }, quantity: n
     quantity,
     unitPrice: product.price,
   };
+}
+
+function createLoosePhoneRegex(value: string) {
+  const digits = value.replace(/\D/g, '');
+
+  if (!digits) {
+    return null;
+  }
+
+  return new RegExp(digits.split('').map(escapeRegex).join('\\D*'), 'i');
 }
 
 export const createOrder = asyncHandler(async (request, response) => {
@@ -178,8 +194,13 @@ export const createOrder = asyncHandler(async (request, response) => {
 });
 
 export const listAdminOrders = asyncHandler(async (request, response) => {
-  const { limit, page, search, status } = request.query as unknown as AdminOrderListQuery;
-  const filter: Record<string, unknown> = {};
+  const { date, limit, page, search, status } = request.query as unknown as AdminOrderListQuery;
+  const filter: Record<string, unknown> = { ...notDeletedOrderFilter };
+
+  if (date) {
+    const range = businessDateRangeFromKey(date);
+    filter.createdAt = { $gte: range.start, $lt: range.end };
+  }
 
   if (status) {
     filter.status = status;
@@ -187,9 +208,11 @@ export const listAdminOrders = asyncHandler(async (request, response) => {
 
   if (search) {
     const regex = new RegExp(escapeRegex(search), 'i');
+    const phoneRegex = createLoosePhoneRegex(search);
     filter.$or = [
       { 'customer.name': regex },
       { 'customer.phone': regex },
+      ...(phoneRegex ? [{ 'customer.phone': phoneRegex }] : []),
       { orderNumber: regex },
     ];
   }
@@ -217,7 +240,7 @@ export const listAdminOrders = asyncHandler(async (request, response) => {
 
 export const getAdminOrder = asyncHandler(async (request, response) => {
   const { id } = request.params as { id: string };
-  const order = await OrderModel.findById(id);
+  const order = await OrderModel.findOne({ _id: id, ...notDeletedOrderFilter });
 
   if (!order) {
     throw new AppError(orderNotFoundMessage, 404);
@@ -234,7 +257,7 @@ export const updateOrderStatus = asyncHandler(async (request, response) => {
 
   try {
     await session.withTransaction(async () => {
-      const order = await OrderModel.findById(id).session(session);
+      const order = await OrderModel.findOne({ _id: id, ...notDeletedOrderFilter }).session(session);
 
       if (!order) {
         throw new AppError(orderNotFoundMessage, 404);
@@ -245,37 +268,23 @@ export const updateOrderStatus = asyncHandler(async (request, response) => {
         return;
       }
 
-      const [newStatus, confirmedStatus, preparingStatus, completedStatus, cancelledStatus] =
-        ORDER_STATUSES;
+      const [newStatus, receivedStatus, preparingStatus, deliveredStatus] =
+        ACTIVE_ORDER_STATUSES;
 
-      if (order.status === cancelledStatus) {
-        throw new AppError('Cancelled orders cannot be reopened', 409);
-      }
-
-      if (order.status === completedStatus) {
+      if (order.status === deliveredStatus || order.status === legacyCompletedStatus) {
         throw new AppError('Completed orders cannot be changed', 409);
       }
 
       const allowedTransitions: Record<string, readonly string[]> = {
-        [newStatus]: [confirmedStatus, cancelledStatus],
-        [confirmedStatus]: [preparingStatus, cancelledStatus],
-        [preparingStatus]: [completedStatus, cancelledStatus],
+        [newStatus]: [receivedStatus],
+        [receivedStatus]: [preparingStatus],
+        [preparingStatus]: [deliveredStatus],
+        ['\u062a\u0645 \u0627\u0644\u062a\u0623\u0643\u064a\u062f']: [receivedStatus, preparingStatus],
+        ['\u0642\u064a\u062f \u0627\u0644\u062a\u062c\u0647\u064a\u0632']: [preparingStatus, deliveredStatus],
       };
 
       if (!allowedTransitions[order.status]?.includes(status)) {
         throw new AppError('Invalid order status transition', 409);
-      }
-
-      if (status === cancelledStatus) {
-        for (const item of order.items) {
-          await ProductModel.updateOne(
-            { _id: item.product },
-            { $inc: { stock: item.quantity } },
-            { session },
-          );
-        }
-
-        order.stockRestoredAt = new Date();
       }
 
       order.status = status;
@@ -291,4 +300,49 @@ export const updateOrderStatus = asyncHandler(async (request, response) => {
   }
 
   return sendSuccess(response, { order: serializeOrder(updatedOrder) }, 'Order status updated successfully');
+});
+
+export const deleteOrder = asyncHandler(async (request, response) => {
+  const { id } = request.params as { id: string };
+  const session = await mongoose.startSession();
+  let deletedOrder: mongoose.HydratedDocument<Order> | null = null;
+
+  try {
+    await session.withTransaction(async () => {
+      const order = await OrderModel.findOne({ _id: id, ...notDeletedOrderFilter }).session(session);
+
+      if (!order) {
+        throw new AppError(orderNotFoundMessage, 404);
+      }
+
+      if (shouldRestoreStockOnSoftDelete(order)) {
+        for (const item of order.items) {
+          await ProductModel.updateOne(
+            { _id: item.product },
+            { $inc: { stock: item.quantity } },
+            { session },
+          );
+        }
+
+        order.stockRestoredAt = new Date();
+      }
+
+      order.deletedAt = new Date();
+
+      if (request.admin?.id && Types.ObjectId.isValid(request.admin.id)) {
+        order.deletedBy = new Types.ObjectId(request.admin.id);
+      }
+
+      await order.save({ session });
+      deletedOrder = order;
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  if (!deletedOrder) {
+    throw new AppError('Order could not be deleted', 500);
+  }
+
+  return sendSuccess(response, { order: serializeOrder(deletedOrder) }, 'Order deleted successfully');
 });

@@ -1,5 +1,10 @@
-import { orderStatuses } from '../../../data/orders';
-import type { AdminOrder, Category, OrderStatus, Product } from '../../../types/catalog';
+import {
+  activeOrderStatuses,
+  type AdminOrder,
+  type Category,
+  type OrderStatus,
+  type Product,
+} from '../../../types/catalog';
 import { formatCurrency } from '../../../utils/format';
 
 export type ReportRange = 'today' | 'last7' | 'month' | 'year';
@@ -84,7 +89,7 @@ export const reportRangeOptions: ReportRangeOption[] = [
   { value: 'year', label: 'هذا العام' },
 ];
 
-const canceledStatus = orderStatuses[4];
+const deliveredStatus = activeOrderStatuses[3];
 const dayInMs = 24 * 60 * 60 * 1000;
 
 function startOfDay(date: Date) {
@@ -212,7 +217,7 @@ function isInWindow(order: AdminOrder, window: DateWindow) {
 }
 
 function isRevenueOrder(order: AdminOrder) {
-  return order.status !== canceledStatus;
+  return order.status === deliveredStatus;
 }
 
 function getProductCost(productById: Map<string, Product>, productId: string) {
@@ -231,7 +236,9 @@ function getOrderProfit(order: AdminOrder, productById: Map<string, Product>) {
 }
 
 function getOrderRevenue(order: AdminOrder) {
-  return isRevenueOrder(order) ? order.total : 0;
+  return isRevenueOrder(order)
+    ? order.items.reduce((sum, item) => sum + item.lineTotal, 0)
+    : 0;
 }
 
 function getOrdersForBucket(orders: AdminOrder[], bucket: TrendBucket) {
@@ -333,7 +340,7 @@ function createCategoryPerformance(
 }
 
 function createStatusSummary(orders: AdminOrder[]): ReportStatusItem[] {
-  const countsByStatus = new Map<OrderStatus, number>(orderStatuses.map((status) => [status, 0]));
+  const countsByStatus = new Map<OrderStatus, number>(activeOrderStatuses.map((status) => [status, 0]));
 
   orders.forEach((order) => {
     countsByStatus.set(order.status, (countsByStatus.get(order.status) ?? 0) + 1);
@@ -341,7 +348,7 @@ function createStatusSummary(orders: AdminOrder[]): ReportStatusItem[] {
 
   const totalOrders = Math.max(orders.length, 1);
 
-  return orderStatuses.map((status) => ({
+  return activeOrderStatuses.map((status) => ({
     status,
     count: countsByStatus.get(status) ?? 0,
     percent: Math.round(((countsByStatus.get(status) ?? 0) / totalOrders) * 100),

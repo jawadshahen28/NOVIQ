@@ -112,6 +112,14 @@ const orderSchema = new Schema<Order>(
       min: [0, 'Delivery fee must be greater than or equal to 0'],
       type: Number,
     },
+    deletedAt: {
+      default: null,
+      type: Date,
+    },
+    deletedBy: {
+      ref: 'Admin',
+      type: Schema.Types.ObjectId,
+    },
     paymentMethod: {
       default: 'cash_on_delivery',
       enum: PAYMENT_METHODS,
@@ -157,5 +165,7 @@ orderSchema.pre('validate', function setOrderNumber() {
 
 orderSchema.index({ orderNumber: 1 }, { unique: true });
 orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ deletedAt: 1, createdAt: -1 });
+orderSchema.index({ deletedAt: 1, status: 1, createdAt: -1 });
 
 export const OrderModel = model<Order>('Order', orderSchema);

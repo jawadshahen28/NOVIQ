@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { mongoObjectIdSchema, paginationQuerySchema, slugSchema } from './commonSchemas.js';
 import { DELIVERY_REGION_CODES } from '../config/delivery.js';
-import { ORDER_STATUSES } from '../types/models.js';
+import { isBusinessDateKey } from '../config/businessTime.js';
+import { ACTIVE_ORDER_STATUSES, ORDER_STATUSES } from '../types/models.js';
 
 const requiredTextSchema = (field: string, max: number) =>
   z.string().trim().min(1, `${field} is required`).max(max);
@@ -37,12 +38,13 @@ export const createOrderBodySchema = z.object({
 }).strict();
 
 export const adminOrderListQuerySchema = paginationQuerySchema.extend({
+  date: z.string().trim().refine(isBusinessDateKey, 'Date must use YYYY-MM-DD').optional(),
   search: z.string().trim().max(100).optional(),
   status: z.enum(ORDER_STATUSES).optional(),
 });
 
 export const updateOrderStatusBodySchema = z.object({
-  status: z.enum(ORDER_STATUSES),
+  status: z.enum(ACTIVE_ORDER_STATUSES),
 }).strict();
 
 export type AdminOrderListQuery = z.infer<typeof adminOrderListQuerySchema>;

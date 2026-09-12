@@ -5,15 +5,27 @@ export const ADMIN_ROLES = ['admin'] as const;
 
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 
-export const ORDER_STATUSES = [
+export const ACTIVE_ORDER_STATUSES = [
   '\u062c\u062f\u064a\u062f',
+  '\u062a\u0645 \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645',
+  '\u062a\u0645 \u0627\u0644\u062a\u062c\u0647\u064a\u0632 \u0648\u0628\u0627\u0646\u062a\u0638\u0627\u0631 \u0627\u0644\u062a\u0648\u0635\u064a\u0644',
+  '\u062a\u0645 \u0627\u0644\u062a\u0633\u0644\u064a\u0645',
+] as const;
+
+export const LEGACY_ORDER_STATUSES = [
   '\u062a\u0645 \u0627\u0644\u062a\u0623\u0643\u064a\u062f',
   '\u0642\u064a\u062f \u0627\u0644\u062a\u062c\u0647\u064a\u0632',
   '\u0645\u0643\u062a\u0645\u0644',
   '\u0645\u0644\u063a\u064a',
 ] as const;
 
+export const ORDER_STATUSES = [
+  ...ACTIVE_ORDER_STATUSES,
+  ...LEGACY_ORDER_STATUSES,
+] as const;
+
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
+export type ActiveOrderStatus = (typeof ACTIVE_ORDER_STATUSES)[number];
 
 export const PAYMENT_METHODS = ['cash_on_delivery'] as const;
 
@@ -91,6 +103,8 @@ export interface Order extends TimestampFields {
   total: number;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
+  deletedAt?: Date | null;
+  deletedBy?: Types.ObjectId;
   stockRestoredAt?: Date;
 }
 

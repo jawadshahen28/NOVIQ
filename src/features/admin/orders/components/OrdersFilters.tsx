@@ -1,37 +1,31 @@
-import { RotateCcw, Search } from 'lucide-react';
-import type { OrderStatus } from '../../../../types/catalog';
+import { CalendarDays, RotateCcw, Search } from 'lucide-react';
+import type { ActiveOrderStatus } from '../../../../types/catalog';
 
-export type OrderDateFilter = 'all' | 'today' | 'last-7-days' | 'month';
-export type OrderStatusFilter = 'all' | OrderStatus;
+export type OrderStatusFilter = 'all' | ActiveOrderStatus;
 
 interface OrdersFiltersProps {
   searchTerm: string;
   statusFilter: OrderStatusFilter;
-  dateFilter: OrderDateFilter;
-  statuses: OrderStatus[];
+  selectedDate: string;
+  selectedDateLabel: string;
+  statuses: ActiveOrderStatus[];
   hasActiveFilters: boolean;
   onSearchChange: (value: string) => void;
   onStatusFilterChange: (value: OrderStatusFilter) => void;
-  onDateFilterChange: (value: OrderDateFilter) => void;
+  onDateChange: (value: string) => void;
   onReset: () => void;
 }
-
-const dateFilterOptions: Array<{ value: OrderDateFilter; label: string }> = [
-  { value: 'all', label: 'جميع التواريخ' },
-  { value: 'today', label: 'اليوم' },
-  { value: 'last-7-days', label: 'آخر 7 أيام' },
-  { value: 'month', label: 'هذا الشهر' },
-];
 
 export default function OrdersFilters({
   searchTerm,
   statusFilter,
-  dateFilter,
+  selectedDate,
+  selectedDateLabel,
   statuses,
   hasActiveFilters,
   onSearchChange,
   onStatusFilterChange,
-  onDateFilterChange,
+  onDateChange,
   onReset,
 }: OrdersFiltersProps) {
   return (
@@ -39,7 +33,7 @@ export default function OrdersFilters({
       className="rounded-md border border-noviq-border bg-noviq-card p-4 sm:p-5"
       data-orders-filters
     >
-      <div className="grid gap-4 xl:grid-cols-[minmax(260px,1fr)_220px_200px_auto] xl:items-end">
+      <div className="grid gap-4 xl:grid-cols-[minmax(260px,1fr)_220px_220px_auto] xl:items-end">
         <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
           <span>البحث</span>
           <span className="relative">
@@ -78,18 +72,22 @@ export default function OrdersFilters({
 
         <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
           <span>التاريخ</span>
-          <select
-            className="field"
-            onChange={(event) => onDateFilterChange(event.target.value as OrderDateFilter)}
-            value={dateFilter}
-            data-orders-date-filter
-          >
-            {dateFilterOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <span className="relative">
+            <input
+              className="field pr-11"
+              onChange={(event) => onDateChange(event.target.value)}
+              required
+              type="date"
+              value={selectedDate}
+              data-orders-date-filter
+            />
+            <CalendarDays
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-noviq-muted"
+              size={18}
+              strokeWidth={1.8}
+            />
+          </span>
+          <span className="text-xs font-medium text-noviq-muted">{selectedDateLabel}</span>
         </label>
 
         {hasActiveFilters ? (

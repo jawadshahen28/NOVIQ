@@ -1,7 +1,7 @@
 import { AnalyticsEventModel } from '../models/AnalyticsEvent.js';
 import { OrderModel } from '../models/Order.js';
 import { ProductModel } from '../models/Product.js';
-import { businessDayStart, addBusinessDays } from '../config/businessTime.js';
+import { addBusinessDays, businessDateKey, businessDayStart } from '../config/businessTime.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import type { AnalyticsTrackBody } from '../validators/analyticsValidators.js';
@@ -48,7 +48,7 @@ export const getAdminAnalytics = asyncHandler(async (request, response) => {
     productViews.set(key, (productViews.get(key) ?? 0) + 1);
   });
   events.forEach((event) => { const source = event.source ?? 'Direct'; sources.set(source, (sources.get(source) ?? 0) + 1); });
-  const orders = await OrderModel.find({ createdAt: { $gte: start, $lte: end } });
+  const orders = await OrderModel.find({ deletedAt: null, createdAt: { $gte: start, $lte: end } });
   const conversionRate = sessions.size ? (orders.filter((order) => isRevenueStatus(order.status)).length / sessions.size) * 100 : 0;
   // One daily bucket per business day in the requested range; never include future days.
   const startDay = businessDayStart(start);
@@ -58,7 +58,7 @@ export const getAdminAnalytics = asyncHandler(async (request, response) => {
   const daily = Array.from({ length: dayCount }, (_, index) => {
     const day = addBusinessDays(startDay, index);
     const next = addBusinessDays(day, 1);
-    return { label: day.toISOString().slice(5, 10), visitors: new Set(events.filter((event) => event.eventType === 'page_view' && event.timestamp && event.timestamp >= day && event.timestamp < next).map((event) => event.anonymousVisitorId)).size };
+    return { label: businessDateKey(day).slice(5), visitors: new Set(events.filter((event) => event.eventType === 'page_view' && event.timestamp && event.timestamp >= day && event.timestamp < next).map((event) => event.anonymousVisitorId)).size };
   });
   const [productDocsById, productDocsBySlug] = await Promise.all([
     ProductModel.find({ _id: { $in: Array.from(productIdKeys) } }).select('name slug primaryImage'),

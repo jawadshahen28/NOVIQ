@@ -25,6 +25,8 @@ export interface SerializedOrder {
   deliveryRegion?: Order['deliveryRegion'];
   deliveryRegionLabel?: string;
   deliveryFee?: number;
+  deletedAt?: string;
+  deletedBy?: string;
   subtotal: number;
   shipping: number;
   total: number;
@@ -82,6 +84,16 @@ export function serializeOrder(order: HydratedDocument<Order>): SerializedOrder 
 
   if (notes) {
     serialized.notes = notes;
+  }
+
+  const deletedAt = toIsoDate(order.deletedAt ?? undefined);
+
+  if (deletedAt) {
+    serialized.deletedAt = deletedAt;
+  }
+
+  if (order.deletedBy) {
+    serialized.deletedBy = order.deletedBy.toString();
   }
 
   const updatedAt = toIsoDate(order.updatedAt);

@@ -27,6 +27,7 @@ import {
   updateProductBodySchema,
 } from '../validators/catalogValidators.js';
 import {
+  deleteOrder,
   getAdminOrder,
   listAdminOrders,
   updateOrderStatus,
@@ -91,6 +92,7 @@ adminRouter.delete('/products/:id', validateRequest({ params: resourceIdParamsSc
 
 adminRouter.get('/orders', validateRequest({ query: adminOrderListQuerySchema }), listAdminOrders);
 adminRouter.get('/orders/:id', validateRequest({ params: resourceIdParamsSchema }), getAdminOrder);
+adminRouter.delete('/orders/:id', validateRequest({ params: resourceIdParamsSchema }), deleteOrder);
 adminRouter.patch(
   '/orders/:id/status',
   validateRequest({ body: updateOrderStatusBodySchema, params: resourceIdParamsSchema }),

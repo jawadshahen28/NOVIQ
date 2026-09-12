@@ -2,9 +2,12 @@ import type { OrderStatus } from '../../../types/catalog';
 
 const statusClasses: Record<OrderStatus, string> = {
   جديد: 'border-noviq-gold/60 bg-noviq-gold/10 text-noviq-gold',
-  'تم التأكيد': 'border-emerald-500/45 bg-emerald-500/10 text-emerald-200',
-  'قيد التجهيز': 'border-amber-500/45 bg-amber-500/10 text-amber-200',
-  مكتمل: 'border-green-500/45 bg-green-500/10 text-green-200',
+  'تم الاستلام': 'border-emerald-500/45 bg-emerald-500/10 text-emerald-200',
+  'تم التجهيز وبانتظار التوصيل': 'border-amber-500/45 bg-amber-500/10 text-amber-200',
+  'تم التسليم': 'border-green-500/45 bg-green-500/10 text-green-200',
+  'تم التأكيد': 'border-emerald-500/30 bg-emerald-500/5 text-emerald-200',
+  'قيد التجهيز': 'border-amber-500/30 bg-amber-500/5 text-amber-200',
+  مكتمل: 'border-green-500/30 bg-green-500/5 text-green-200',
   ملغي: 'border-red-500/40 bg-red-500/10 text-red-200',
 };
 

@@ -1,21 +1,23 @@
-import { ExternalLink, X } from 'lucide-react';
+import { ExternalLink, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { resolveDeliveryRegionOption } from '../../../../config/delivery';
-import type { AdminOrder, OrderStatus } from '../../../../types/catalog';
+import type { ActiveOrderStatus, AdminOrder, OrderStatus } from '../../../../types/catalog';
 import { createPalestinianWhatsAppHref } from '../../../../utils/contactLinks';
 import { formatCurrency, formatDate } from '../../../../utils/format';
 import StatusBadge from '../../components/StatusBadge';
 
 interface OrderDetailsDrawerProps {
   order: AdminOrder | null;
-  statuses: OrderStatus[];
+  statuses: ActiveOrderStatus[];
   feedback: string;
   onClose: () => void;
-  onStatusChange: (orderId: string, status: OrderStatus) => void;
+  onDelete: (orderId: string) => void;
+  onStatusChange: (orderId: string, status: ActiveOrderStatus) => void;
 }
 
-const cancelledStatus: OrderStatus = 'ملغي';
 const unspecifiedText = 'غير محدد';
+const legacyConfirmedStatus: OrderStatus = 'تم التأكيد';
+const legacyPreparingStatus: OrderStatus = 'قيد التجهيز';
 
 function getDeliveryRegionLabel(order: AdminOrder) {
   return (
@@ -33,14 +35,19 @@ function getOrderSubtotal(order: AdminOrder) {
   return order.subtotal ?? order.items.reduce((sum, item) => sum + item.lineTotal, 0);
 }
 
+function isActiveStatus(status: OrderStatus, statuses: ActiveOrderStatus[]): status is ActiveOrderStatus {
+  return statuses.some((candidate) => candidate === status);
+}
+
 export default function OrderDetailsDrawer({
   order,
   statuses,
   feedback,
   onClose,
+  onDelete,
   onStatusChange,
 }: OrderDetailsDrawerProps) {
-  const [pendingCancelStatus, setPendingCancelStatus] = useState<OrderStatus | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!order) {
@@ -52,8 +59,8 @@ export default function OrderDetailsDrawer({
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        if (pendingCancelStatus) {
-          setPendingCancelStatus(null);
+        if (isDeleteDialogOpen) {
+          setIsDeleteDialogOpen(false);
           return;
         }
 
@@ -67,10 +74,10 @@ export default function OrderDetailsDrawer({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose, order, pendingCancelStatus]);
+  }, [isDeleteDialogOpen, onClose, order]);
 
   useEffect(() => {
-    setPendingCancelStatus(null);
+    setIsDeleteDialogOpen(false);
   }, [order?.id]);
 
   const itemCount = useMemo(
@@ -87,27 +94,25 @@ export default function OrderDetailsDrawer({
   const deliveryRegionLabel = getDeliveryRegionLabel(order);
   const deliveryFeeLabel = getDeliveryFeeLabel(order);
   const customerWhatsAppHref = createPalestinianWhatsAppHref(order.phone);
+  const statusOptions = isActiveStatus(order.status, statuses)
+    ? statuses
+    : [order.status, ...statuses];
+  const canUpdateStatus =
+    isActiveStatus(order.status, statuses.slice(0, -1)) ||
+    order.status === legacyConfirmedStatus ||
+    order.status === legacyPreparingStatus;
 
   function handleStatusChange(status: OrderStatus) {
-    if (status === activeOrder.status) {
-      return;
-    }
-
-    if (status === cancelledStatus) {
-      setPendingCancelStatus(status);
+    if (status === activeOrder.status || !isActiveStatus(status, statuses)) {
       return;
     }
 
     onStatusChange(activeOrder.id, status);
   }
 
-  function confirmCancellation() {
-    if (!pendingCancelStatus) {
-      return;
-    }
-
-    onStatusChange(activeOrder.id, pendingCancelStatus);
-    setPendingCancelStatus(null);
+  function confirmDelete() {
+    onDelete(activeOrder.id);
+    setIsDeleteDialogOpen(false);
   }
 
   return (
@@ -162,13 +167,18 @@ export default function OrderDetailsDrawer({
                   <span>تحديث الحالة</span>
                   <select
                     className="field"
+                    disabled={!canUpdateStatus}
                     onChange={(event) => handleStatusChange(event.target.value as OrderStatus)}
                     value={order.status}
                     data-order-status-select
                   >
-                    {statuses.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
+                    {statusOptions.map((status) => (
+                      <option
+                        disabled={!isActiveStatus(status, statuses)}
+                        key={status}
+                        value={status}
+                      >
+                        {isActiveStatus(status, statuses) ? status : `${status} - حالة قديمة`}
                       </option>
                     ))}
                   </select>
@@ -286,39 +296,49 @@ export default function OrderDetailsDrawer({
                 </div>
               </dl>
             </section>
+
+            <button
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-4 text-sm font-semibold text-red-200 transition hover:border-red-400"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              type="button"
+              data-delete-order
+            >
+              <Trash2 size={16} strokeWidth={1.8} />
+              حذف الطلب
+            </button>
           </div>
         </div>
       </aside>
 
-      {pendingCancelStatus ? (
+      {isDeleteDialogOpen ? (
         <div
           className="absolute inset-0 z-10 flex items-center justify-center bg-black/65 px-4"
           role="dialog"
           aria-modal="true"
-          aria-label="تأكيد إلغاء الطلب"
-          data-cancel-order-dialog
+          aria-label="تأكيد حذف الطلب"
+          data-delete-order-dialog
         >
           <div className="w-full max-w-sm rounded-md border border-noviq-border bg-noviq-card p-5">
             <p className="text-base font-bold text-noviq-text">
-              هل أنت متأكد من إلغاء هذا الطلب؟
+              هل أنت متأكد من حذف هذا الطلب؟
             </p>
             <p className="mt-2 text-sm leading-7 text-noviq-secondaryText">
-              سيبقى الطلب ظاهرا في السجل بحالة ملغي.
+              سيتم إخفاء الطلب من القوائم والتقارير دون حذفه نهائيا من قاعدة البيانات.
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <button
                 className="inline-flex min-h-11 items-center justify-center rounded-md border border-red-500/50 bg-red-500/10 px-4 text-sm font-semibold text-red-200 transition hover:border-red-400"
-                onClick={confirmCancellation}
+                onClick={confirmDelete}
                 type="button"
-                data-cancel-order-confirm
+                data-delete-order-confirm
               >
-                إلغاء الطلب
+                حذف الطلب
               </button>
               <button
                 className="inline-flex min-h-11 items-center justify-center rounded-md border border-noviq-border px-4 text-sm font-semibold text-noviq-secondaryText transition hover:border-noviq-gold hover:text-noviq-gold"
-                onClick={() => setPendingCancelStatus(null)}
+                onClick={() => setIsDeleteDialogOpen(false)}
                 type="button"
-                data-cancel-order-back
+                data-delete-order-back
               >
                 تراجع
               </button>
