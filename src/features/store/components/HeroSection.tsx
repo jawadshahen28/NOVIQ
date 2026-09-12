@@ -58,7 +58,7 @@ export default function HeroSection() {
           className="hero-text-reveal absolute inset-0 z-10 flex min-w-0 items-end justify-center px-4 pb-2 pt-16 text-center sm:px-6 lg:relative lg:inset-auto lg:order-2 lg:min-h-[600px] lg:items-center lg:justify-end lg:px-10 lg:py-0 lg:text-right"
           dir="rtl"
         >
-          <div className="w-full max-w-full translate-y-5 lg:max-w-[520px] lg:translate-y-0">
+          <div className="w-full max-w-full translate-y-0 lg:max-w-[520px] lg:translate-y-0">
             <h1
               className="font-heading text-[clamp(36px,10.6vw,42px)] font-semibold leading-[1.18] text-noviq-text sm:text-[52px] lg:text-[64px] lg:leading-[1.15]"
               data-home-hero-title

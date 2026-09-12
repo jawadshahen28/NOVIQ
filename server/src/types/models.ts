@@ -1,5 +1,5 @@
 import type { Types } from 'mongoose';
-import type { DeliveryRegionCode } from '../config/delivery.js';
+import type { StoredDeliveryRegionCode } from '../config/delivery.js';
 
 export const ADMIN_ROLES = ['admin'] as const;
 
@@ -83,7 +83,7 @@ export interface Order extends TimestampFields {
   orderNumber: string;
   customer: OrderCustomer;
   items: OrderItem[];
-  deliveryRegion?: DeliveryRegionCode;
+  deliveryRegion?: StoredDeliveryRegionCode;
   deliveryRegionLabel?: string;
   deliveryFee?: number;
   subtotal: number;

@@ -1,6 +1,6 @@
 import { CheckCircle2, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { getDeliveryRegionOption } from '../config/delivery';
+import { resolveDeliveryRegionOption } from '../config/delivery';
 import {
   clearSubmittedOrderSnapshot,
   loadSubmittedOrderSnapshot,
@@ -18,7 +18,7 @@ const unspecifiedText = 'غير محدد';
 function getSubmittedDeliveryRegionLabel(order: SubmittedOrderSnapshot) {
   return (
     order.deliveryRegionLabel?.trim() ||
-    getDeliveryRegionOption(order.deliveryRegion)?.label ||
+    resolveDeliveryRegionOption(order.deliveryRegion)?.label ||
     unspecifiedText
   );
 }

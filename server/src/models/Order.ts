@@ -1,5 +1,5 @@
 import { Schema, Types, model } from 'mongoose';
-import { DELIVERY_REGION_CODES } from '../config/delivery.js';
+import { STORED_DELIVERY_REGION_CODES } from '../config/delivery.js';
 import { createOrderNumberFromObjectId } from '../utils/orderNumber.js';
 import { ORDER_STATUSES, PAYMENT_METHODS, type Order } from '../types/models.js';
 
@@ -100,7 +100,7 @@ const orderSchema = new Schema<Order>(
       type: String,
     },
     deliveryRegion: {
-      enum: [...DELIVERY_REGION_CODES],
+      enum: [...STORED_DELIVERY_REGION_CODES],
       trim: true,
       type: String,
     },

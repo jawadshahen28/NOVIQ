@@ -324,7 +324,7 @@ export default function CheckoutPage() {
                       <option value="">اختر منطقة التوصيل</option>
                       {DELIVERY_REGION_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label} - {formatCurrency(option.fee)}
+                          {option.label} — {formatCurrency(option.fee)}
                         </option>
                       ))}
                     </select>

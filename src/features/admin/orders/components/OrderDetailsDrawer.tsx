@@ -1,6 +1,6 @@
 import { ExternalLink, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { getDeliveryRegionOption } from '../../../../config/delivery';
+import { resolveDeliveryRegionOption } from '../../../../config/delivery';
 import type { AdminOrder, OrderStatus } from '../../../../types/catalog';
 import { createPalestinianWhatsAppHref } from '../../../../utils/contactLinks';
 import { formatCurrency, formatDate } from '../../../../utils/format';
@@ -20,7 +20,7 @@ const unspecifiedText = 'غير محدد';
 function getDeliveryRegionLabel(order: AdminOrder) {
   return (
     order.deliveryRegionLabel?.trim() ||
-    getDeliveryRegionOption(order.deliveryRegion)?.label ||
+    resolveDeliveryRegionOption(order.deliveryRegion)?.label ||
     unspecifiedText
   );
 }
