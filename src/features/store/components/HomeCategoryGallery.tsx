@@ -43,7 +43,7 @@ export default function HomeCategoryGallery() {
 
         <div className="relative">
           <button
-            className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-noviq-border bg-noviq-pure text-noviq-text transition duration-200 hover:border-noviq-gold hover:text-noviq-gold lg:flex"
+            className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-noviq-border bg-noviq-pure text-noviq-text transition duration-200 hover:border-noviq-gold hover:text-noviq-gold"
             onClick={() => scrollGallery('left')}
             type="button"
             aria-label="تحريك الفئات يسارا"
@@ -88,7 +88,7 @@ export default function HomeCategoryGallery() {
           </div>
 
           <button
-            className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-noviq-border bg-noviq-pure text-noviq-text transition duration-200 hover:border-noviq-gold hover:text-noviq-gold lg:flex"
+            className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-noviq-border bg-noviq-pure text-noviq-text transition duration-200 hover:border-noviq-gold hover:text-noviq-gold"
             onClick={() => scrollGallery('right')}
             type="button"
             aria-label="تحريك الفئات يمينا"
