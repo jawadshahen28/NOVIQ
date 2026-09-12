@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, ShieldCheck, ShoppingBag } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import Button from '../components/Button';
 import QuantityStepper from '../components/QuantityStepper';
 import SectionHeader from '../components/SectionHeader';
@@ -12,11 +12,13 @@ import {
 } from '../features/cart/hooks/useAddToCartSuccess';
 import ProductGallery from '../features/products/components/ProductGallery';
 import HomeProductCard from '../features/store/components/HomeProductCard';
+import { trackViewContent } from '../services/metaPixel';
 import { formatCurrency, getDiscountedPrice, stockLabel } from '../utils/format';
 import NotFoundPage from './NotFoundPage';
 
 export default function ProductPage() {
   const { slug } = useParams();
+  const location = useLocation();
   const [quantity, setQuantity] = useState(1);
   const { categories, loadProduct, products } = useStoreCatalog();
 
@@ -32,6 +34,12 @@ export default function ProductPage() {
   useEffect(() => {
     setQuantity(1);
   }, [slug]);
+
+  useEffect(() => {
+    if (product) {
+      trackViewContent(product, location.key);
+    }
+  }, [location.key, product]);
 
   const relatedProducts = useMemo(() => {
     if (!product) {

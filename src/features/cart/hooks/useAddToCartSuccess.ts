@@ -1,5 +1,6 @@
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import type { Product } from '../../../types/catalog';
+import { trackAddToCart } from '../../../services/metaPixel';
 import { useCart } from '../CartContext';
 
 export const ADD_TO_CART_SUCCESS_TEXT = 'تمت الإضافة!';
@@ -12,7 +13,7 @@ export const addToCartSuccessStyle: CSSProperties = {
 };
 
 export function useAddToCartSuccess(product: Product | undefined, quantity = 1) {
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   const [isSuccess, setIsSuccess] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
@@ -29,12 +30,17 @@ export function useAddToCartSuccess(product: Product | undefined, quantity = 1) 
       return;
     }
 
+    const currentQuantity =
+      items.find((item) => item.product.id === product.id)?.quantity ?? 0;
+    const quantityToAdd = Math.max(1, quantity);
+    const addedQuantity = Math.min(quantityToAdd, product.stock - currentQuantity);
     const wasAdded = addItem(product, quantity);
 
-    if (!wasAdded) {
+    if (!wasAdded || addedQuantity <= 0) {
       return;
     }
 
+    trackAddToCart(product, addedQuantity);
     setIsSuccess(true);
 
     if (timeoutRef.current) {
@@ -45,7 +51,7 @@ export function useAddToCartSuccess(product: Product | undefined, quantity = 1) 
       setIsSuccess(false);
       timeoutRef.current = null;
     }, ADD_TO_CART_SUCCESS_MS);
-  }, [addItem, isSuccess, product, quantity]);
+  }, [addItem, isSuccess, items, product, quantity]);
 
   return {
     handleAddToCart,

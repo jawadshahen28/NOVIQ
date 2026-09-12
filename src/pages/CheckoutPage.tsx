@@ -1,7 +1,7 @@
 import { ArrowLeft, Banknote, CheckCircle2, Truck } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { DELIVERY_REGION_OPTIONS, getDeliveryRegionOption } from '../config/delivery';
 import type { DeliveryRegionCode } from '../config/delivery';
@@ -10,6 +10,7 @@ import CheckoutSummary from '../features/checkout/components/CheckoutSummary';
 import { useStoreSettings } from '../features/store/settings/StoreSettingsContext';
 import { defaultStoreSettings } from '../features/store/settings/storeSettingsDefaults';
 import { ApiClientError } from '../services/apiClient';
+import { trackInitiateCheckout, trackPurchase } from '../services/metaPixel';
 import { createOrder, type CreatedOrder } from '../services/orderApi';
 import { saveSubmittedOrderSnapshot } from '../services/submittedOrderStorage';
 import type { SubmittedOrderSnapshot } from '../types/catalog';
@@ -64,6 +65,7 @@ function createSubmittedOrderSnapshot(order: CreatedOrder): SubmittedOrderSnapsh
 }
 
 export default function CheckoutPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { clearCart, items, subtotal } = useCart();
   const { settings } = useStoreSettings();
@@ -73,6 +75,10 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
   const selectedDeliveryRegion = getDeliveryRegionOption(formValues.deliveryRegion);
+
+  useEffect(() => {
+    trackInitiateCheckout(items, subtotal, location.key);
+  }, [items, location.key, subtotal]);
 
   function validateForm(values: CheckoutFormValues) {
     const nextErrors: CheckoutErrors = {};
@@ -148,6 +154,7 @@ export default function CheckoutPage() {
           quantity: item.quantity,
         })),
       });
+      trackPurchase(order);
       const submittedOrder = createSubmittedOrderSnapshot(order);
 
       saveSubmittedOrderSnapshot(submittedOrder);
