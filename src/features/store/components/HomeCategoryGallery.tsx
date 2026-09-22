@@ -1,101 +1,69 @@
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { useRef } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useStoreCatalog } from '../catalog/StoreCatalogContext';
-import type { CategorySlug } from '../../../types/catalog';
-import { getResponsiveImageProps } from '../../../utils/responsiveImages';
+import menDepartmentImage from '../../../assets/departments/men-accessories.jpg';
+import womenDepartmentImage from '../../../assets/departments/women-accessories.jpg';
 
-const brandLabels: Record<CategorySlug, string> = {
-  rolex: 'ROLEX',
-  curren: 'CURREN',
-  boss: 'BOSS',
-};
-
-const imagePositions: Record<CategorySlug, string> = {
-  rolex: '38% center',
-  curren: '48% center',
-  boss: '30% center',
-};
-
-const categoryImageSizes =
-  '(max-width: 429px) 68vw, (max-width: 639px) 62vw, (max-width: 1023px) 46vw, 31vw';
-const categoryImageWidths = [320, 480, 640, 960] as const;
+const departments = [
+  {
+    image: menDepartmentImage,
+    imagePosition: 'center 56%',
+    label: 'رجال',
+    to: '/men',
+  },
+  {
+    image: womenDepartmentImage,
+    imagePosition: 'center 54%',
+    label: 'نساء',
+    to: '/women',
+  },
+] as const;
 
 export default function HomeCategoryGallery() {
-  const { categories } = useStoreCatalog();
-  const scrollerRef = useRef<HTMLDivElement>(null);
-
-  function scrollGallery(direction: 'left' | 'right') {
-    scrollerRef.current?.scrollBy({
-      left: direction === 'left' ? -360 : 360,
-      behavior: 'smooth',
-    });
-  }
-
   return (
     <section id="categories" className="bg-noviq-black pt-7 pb-7 lg:pt-9 lg:pb-10">
       <div className="luxury-container">
         <div className="mb-5 text-center lg:mb-6">
           <h2 className="font-heading text-2xl font-semibold text-noviq-gold lg:text-[28px]">
-            الفئات
+            اختر القسم
           </h2>
         </div>
 
-        <div className="relative">
-          <button
-            className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-noviq-border bg-noviq-pure text-noviq-text transition duration-200 hover:border-noviq-gold hover:text-noviq-gold"
-            onClick={() => scrollGallery('left')}
-            type="button"
-            aria-label="تحريك الفئات يسارا"
-          >
-            <ArrowLeft size={18} />
-          </button>
+        <nav aria-label="أقسام المتجر" className="grid gap-3.5 sm:gap-4 lg:grid-cols-2">
+          {departments.map((department, index) => (
+            <Link
+              key={department.to}
+              to={department.to}
+              aria-label={`تسوق قسم ${department.label}`}
+              className="home-reveal group relative isolate h-[210px] overflow-hidden rounded border border-noviq-luxuryBorder bg-noviq-card outline-none transition duration-300 hover:-translate-y-0.5 hover:border-noviq-gold focus-visible:ring-2 focus-visible:ring-noviq-gold focus-visible:ring-offset-2 focus-visible:ring-offset-noviq-black min-[390px]:h-[224px] sm:h-[250px] lg:h-[280px]"
+              style={{ animationDelay: `${index * 70}ms` }}
+              data-home-department-card={department.to.slice(1)}
+            >
+              <img
+                src={department.image}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+                style={{ objectPosition: department.imagePosition }}
+                decoding="async"
+                height={800}
+                loading="lazy"
+                width={1200}
+              />
+              <div className="absolute inset-0 bg-noviq-black/45 transition duration-300 group-hover:bg-noviq-black/38" />
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-noviq-pure/95 to-transparent" />
 
-          <div
-            ref={scrollerRef}
-            className="grid snap-x snap-mandatory auto-cols-[68%] grid-flow-col gap-3 overflow-x-auto pb-1 [scrollbar-width:none] min-[430px]:auto-cols-[62%] sm:auto-cols-[46%] sm:gap-4 lg:grid-flow-row lg:grid-cols-3 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden"
-          >
-            {categories.map((category, index) => (
-              <Link
-                key={category.id}
-                to={`/category/${category.slug}`}
-                className="home-reveal group relative h-[116px] snap-start overflow-hidden rounded border border-noviq-luxuryBorder bg-noviq-card transition duration-300 hover:-translate-y-0.5 hover:border-noviq-gold min-[390px]:h-[126px] sm:h-[142px] lg:h-auto lg:aspect-[2.2/1]"
-                style={{ animationDelay: `${index * 60}ms` }}
-                data-home-category-card
-              >
-                <img
-                  {...getResponsiveImageProps(category.image, {
-                    fallbackWidth: 640,
-                    sizes: categoryImageSizes,
-                    widths: categoryImageWidths,
-                  })}
-                  alt={category.name}
-                  className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
-                  style={{ objectPosition: imagePositions[category.slug] }}
-                  decoding="async"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-noviq-black opacity-45" />
-                <div className="absolute inset-x-0 bottom-0 h-12 bg-noviq-pure opacity-75 lg:h-16" />
-                <p className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-noviq-gold sm:text-xs lg:bottom-4">
-                  {brandLabels[category.slug]}
-                </p>
-                <h3 className="absolute bottom-2.5 right-3 font-heading text-sm font-semibold text-noviq-text sm:text-base lg:bottom-3 lg:right-4">
-                  {category.name}
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 px-5 pb-5 sm:px-6 sm:pb-6" dir="rtl">
+                <h3 className="font-heading text-[26px] font-semibold text-noviq-text sm:text-[30px]">
+                  {department.label}
                 </h3>
-              </Link>
-            ))}
-          </div>
-
-          <button
-            className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-noviq-border bg-noviq-pure text-noviq-text transition duration-200 hover:border-noviq-gold hover:text-noviq-gold"
-            onClick={() => scrollGallery('right')}
-            type="button"
-            aria-label="تحريك الفئات يمينا"
-          >
-            <ArrowRight size={18} />
-          </button>
-        </div>
+                <span className="mb-1 inline-flex items-center gap-1.5 text-xs font-medium text-noviq-gold">
+                  اكتشف
+                  <ArrowLeft aria-hidden="true" size={15} />
+                </span>
+              </div>
+            </Link>
+          ))}
+        </nav>
       </div>
     </section>
   );

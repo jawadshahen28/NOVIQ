@@ -115,6 +115,8 @@ export default function App() {
           <Route element={<StorefrontRouteProviders />}>
             <Route element={<StoreLayout />}>
               <Route index element={<HomePage />} />
+              <Route path="men" element={<Navigate to="/#categories" replace />} />
+              <Route path="women" element={<Navigate to="/#categories" replace />} />
               <Route path="category/:slug" element={<CategoryPage />} />
               <Route path="product/:slug" element={<ProductPage />} />
               <Route path="cart" element={<CartPage />} />
