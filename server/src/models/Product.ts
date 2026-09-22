@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import { PRODUCT_DEPARTMENTS } from '../types/models.js';
 import type { Product } from '../types/models.js';
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -13,6 +14,11 @@ const productSchema = new Schema<Product>(
       ref: 'Category',
       required: true,
       type: Schema.Types.ObjectId,
+    },
+    department: {
+      enum: PRODUCT_DEPARTMENTS,
+      required: [true, 'Product department is required'],
+      type: String,
     },
     compareAtPrice: {
       min: [0, 'Compare-at price must be greater than or equal to 0'],
@@ -114,6 +120,7 @@ productSchema.pre('validate', function setPrimaryImage() {
 
 productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ category: 1, isActive: 1 });
+productSchema.index({ department: 1, isActive: 1, category: 1 });
 productSchema.index({ isActive: 1, createdAt: -1, name: 1 });
 
 export const ProductModel = model<Product>('Product', productSchema);

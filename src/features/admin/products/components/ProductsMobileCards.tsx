@@ -2,6 +2,7 @@ import type { CategorySlug, Product } from '../../../../types/catalog';
 import { formatCurrency } from '../../../../utils/format';
 import {
   getCategoryName,
+  getProductDepartmentLabel,
   getProductCompareAtPrice,
   getProductSellingPrice,
   getStockStatus,
@@ -48,6 +49,13 @@ export default function ProductsMobileCards({
                 </div>
                 <p className="mt-1 text-xs font-semibold text-noviq-secondaryText">
                   {getCategoryName(categoryMap, product.category)}
+                </p>
+                <p
+                  className={`mt-1 text-xs font-semibold ${
+                    product.department ? 'text-noviq-secondaryText' : 'text-noviq-muted'
+                  }`}
+                >
+                  {getProductDepartmentLabel(product.department)}
                 </p>
               </div>
             </div>

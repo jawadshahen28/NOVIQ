@@ -57,11 +57,16 @@ export interface Category extends TimestampFields {
   isActive: boolean;
 }
 
+export const PRODUCT_DEPARTMENTS = ['MEN', 'WOMEN'] as const;
+
+export type ProductDepartment = (typeof PRODUCT_DEPARTMENTS)[number];
+
 export interface Product extends TimestampFields {
   name: string;
   slug: string;
   brand?: string;
   category: Types.ObjectId;
+  department?: ProductDepartment;
   shortDescription?: string;
   description: string;
   price: number;

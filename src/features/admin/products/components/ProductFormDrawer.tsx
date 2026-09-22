@@ -7,6 +7,7 @@ import { formatCurrency } from '../../../../utils/format';
 import {
   emptyProductFormValues,
   getDerivedDiscountPercent,
+  productDepartmentOptions,
   productToFormValues,
   type ProductFormErrors,
   type ProductFormValues,
@@ -263,6 +264,32 @@ export default function ProductFormDrawer({
                     {errors.name ? (
                       <span id={getFieldErrorId('name')} className="text-xs font-medium text-noviq-gold">
                         {errors.name}
+                      </span>
+                    ) : null}
+                  </label>
+
+                  <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
+                    <span>{'\u0627\u0644\u0642\u0633\u0645'}</span>
+                    <select
+                      aria-describedby={errors.department ? getFieldErrorId('department') : undefined}
+                      aria-invalid={Boolean(errors.department)}
+                      className="field"
+                      onChange={(event) =>
+                        updateValue('department', event.target.value as ProductFormValues['department'])
+                      }
+                      value={values.department}
+                      data-product-department-input
+                    >
+                      <option value="">{'\u0627\u062e\u062a\u0631 \u0627\u0644\u0642\u0633\u0645'}</option>
+                      {productDepartmentOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.department ? (
+                      <span id={getFieldErrorId('department')} className="text-xs font-medium text-noviq-gold">
+                        {errors.department}
                       </span>
                     ) : null}
                   </label>

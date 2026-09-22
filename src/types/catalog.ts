@@ -2,6 +2,18 @@ import type { StoredDeliveryRegionCode } from '../config/delivery';
 
 export type CategorySlug = string;
 
+export const productDepartments = ['MEN', 'WOMEN'] as const;
+
+export type ProductDepartment = (typeof productDepartments)[number];
+
+export const productDepartmentLabels: Record<ProductDepartment, string> = {
+  MEN: '\u0631\u062c\u0627\u0644',
+  WOMEN: '\u0646\u0633\u0627\u0621',
+};
+
+export const unsetProductDepartmentLabel =
+  '\u0627\u0644\u0642\u0633\u0645 \u063a\u064a\u0631 \u0645\u062d\u062f\u062f';
+
 export interface Category {
   id: string;
   name: string;
@@ -27,6 +39,7 @@ export interface Product {
   stock: number;
   category: CategorySlug;
   categoryId?: string;
+  department?: ProductDepartment | null;
   isActive?: boolean;
   isAvailable: boolean;
   specifications: Record<string, string>;

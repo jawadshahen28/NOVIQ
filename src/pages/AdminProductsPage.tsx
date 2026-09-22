@@ -12,8 +12,11 @@ import {
   createCategoryNameMap,
   createProductFromForm,
   getCategoryName,
+  getProductDepartmentLabel,
   getStockStatus,
+  matchesDepartmentFilter,
   matchesStockFilter,
+  type ProductDepartmentFilter,
   type ProductFormValues,
   type ProductStockFilter,
 } from '../features/admin/products/productAdminUtils';
@@ -27,6 +30,8 @@ function getProductSearchText(product: Product, categoryMap: Map<CategorySlug, s
   return normalizeSearchValue(
     [
       product.name,
+      product.department,
+      getProductDepartmentLabel(product.department),
       product.category,
       getCategoryName(categoryMap, product.category),
       product.shortDescription,
@@ -38,6 +43,7 @@ function filterProducts(
   products: Product[],
   searchTerm: string,
   categoryFilter: string,
+  departmentFilter: ProductDepartmentFilter,
   stockFilter: ProductStockFilter,
   categoryMap: Map<CategorySlug, string>,
 ) {
@@ -47,9 +53,10 @@ function filterProducts(
     const matchesSearch =
       !normalizedSearch || getProductSearchText(product, categoryMap).includes(normalizedSearch);
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+    const matchesDepartment = matchesDepartmentFilter(product, departmentFilter);
     const matchesStock = matchesStockFilter(product, stockFilter);
 
-    return matchesSearch && matchesCategory && matchesStock;
+    return matchesSearch && matchesDepartment && matchesCategory && matchesStock;
   });
 }
 
@@ -84,6 +91,7 @@ function createSummary(products: Product[]) {
 export default function AdminProductsPage() {
   const { addProduct, categories, deleteProduct, products, updateProduct } = useAdminCatalog();
   const [searchTerm, setSearchTerm] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState<ProductDepartmentFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState<ProductStockFilter>('all');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -94,16 +102,20 @@ export default function AdminProductsPage() {
   const categoryMap = useMemo(() => createCategoryNameMap(categories), [categories]);
   const summary = useMemo(() => createSummary(products), [products]);
   const visibleProducts = useMemo(
-    () => filterProducts(products, searchTerm, categoryFilter, stockFilter, categoryMap),
-    [categoryFilter, categoryMap, products, searchTerm, stockFilter],
+    () => filterProducts(products, searchTerm, categoryFilter, departmentFilter, stockFilter, categoryMap),
+    [categoryFilter, categoryMap, departmentFilter, products, searchTerm, stockFilter],
   );
   const hasActiveFilters =
-    Boolean(searchTerm.trim()) || categoryFilter !== 'all' || stockFilter !== 'all';
+    Boolean(searchTerm.trim()) ||
+    departmentFilter !== 'all' ||
+    categoryFilter !== 'all' ||
+    stockFilter !== 'all';
   const emptyMessage =
     products.length === 0 ? 'لا توجد منتجات حالياً' : 'لا توجد منتجات مطابقة';
 
   function resetFilters() {
     setSearchTerm('');
+    setDepartmentFilter('all');
     setCategoryFilter('all');
     setStockFilter('all');
   }
@@ -189,8 +201,10 @@ export default function AdminProductsPage() {
       <ProductsFilters
         categories={categories}
         categoryFilter={categoryFilter}
+        departmentFilter={departmentFilter}
         hasActiveFilters={hasActiveFilters}
         onCategoryFilterChange={setCategoryFilter}
+        onDepartmentFilterChange={setDepartmentFilter}
         onReset={resetFilters}
         onSearchChange={setSearchTerm}
         onStockFilterChange={setStockFilter}

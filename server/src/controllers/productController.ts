@@ -16,6 +16,7 @@ import type {
 } from '../validators/catalogValidators.js';
 
 const productNotFoundMessage = 'Product not found';
+const productDepartmentRequiredMessage = 'Product department is required';
 
 function normalizeImages(images: string[], primaryImage?: string) {
   const uniqueImages = images.filter((image, index, allImages) => allImages.indexOf(image) === index);
@@ -84,19 +85,29 @@ async function findCategoryForProduct(body: {
   return undefined;
 }
 
+function addAndFilter(filter: Record<string, unknown>, condition: Record<string, unknown>) {
+  const currentConditions = Array.isArray(filter.$and)
+    ? (filter.$and as Record<string, unknown>[])
+    : [];
+
+  filter.$and = [...currentConditions, condition];
+}
+
 function addSearchFilter(filter: Record<string, unknown>, search?: string) {
   if (!search) {
     return;
   }
 
   const regex = new RegExp(escapeRegex(search), 'i');
-  filter.$or = [
-    { brand: regex },
-    { description: regex },
-    { name: regex },
-    { shortDescription: regex },
-    { slug: regex },
-  ];
+  addAndFilter(filter, {
+    $or: [
+      { brand: regex },
+      { description: regex },
+      { name: regex },
+      { shortDescription: regex },
+      { slug: regex },
+    ],
+  });
 }
 
 function addStockFilter(filter: Record<string, unknown>, stock: AdminProductListQuery['stock']) {
@@ -113,11 +124,33 @@ function addStockFilter(filter: Record<string, unknown>, stock: AdminProductList
   }
 }
 
+function addAdminDepartmentFilter(
+  filter: Record<string, unknown>,
+  department: AdminProductListQuery['department'],
+) {
+  if (!department) {
+    return;
+  }
+
+  if (department === 'UNSET') {
+    addAndFilter(filter, {
+      $or: [{ department: { $exists: false } }, { department: null }],
+    });
+    return;
+  }
+
+  filter.department = department;
+}
+
 export const listPublicProducts = asyncHandler(async (request, response) => {
-  const { category, search } = request.query as PublicProductListQuery;
+  const { category, department, search } = request.query as PublicProductListQuery;
   const filter: Record<string, unknown> = {
     isActive: true,
   };
+
+  if (department) {
+    filter.department = department;
+  }
 
   if (category) {
     const activeCategory = await CategoryModel.findOne({ isActive: true, slug: category });
@@ -164,7 +197,7 @@ export const getPublicProduct = asyncHandler(async (request, response) => {
 });
 
 export const listAdminProducts = asyncHandler(async (request, response) => {
-  const { category, isActive, limit, page, search, stock } =
+  const { category, department, isActive, limit, page, search, stock } =
     request.query as unknown as AdminProductListQuery;
   const filter: Record<string, unknown> = {};
 
@@ -189,6 +222,7 @@ export const listAdminProducts = asyncHandler(async (request, response) => {
     filter.category = selectedCategory._id;
   }
 
+  addAdminDepartmentFilter(filter, department);
   addSearchFilter(filter, search);
   addStockFilter(filter, stock);
 
@@ -238,6 +272,7 @@ export const createProduct = asyncHandler(async (request, response) => {
   const productInput: Partial<Product> = {
     category: categoryId,
     costPrice: body.costPrice,
+    department: body.department,
     description: body.description,
     images,
     isActive: body.isActive ?? body.isAvailable ?? true,
@@ -274,9 +309,21 @@ export const updateProduct = asyncHandler(async (request, response) => {
   const { id } = request.params as { id: string };
   const body = request.body as UpdateProductBody;
   const product = await ProductModel.findById(id);
+  const isStockOnlyUpdate =
+    Object.keys(body).length === 1 && body.stock !== undefined;
 
   if (!product) {
     throw new AppError(productNotFoundMessage, 404);
+  }
+
+  if (!product.department && body.department === undefined && !isStockOnlyUpdate) {
+    throw new AppError(productDepartmentRequiredMessage, 400, [
+      {
+        code: 'required',
+        message: productDepartmentRequiredMessage,
+        path: 'department',
+      },
+    ]);
   }
 
   const categoryId = await findCategoryForProduct(body);
@@ -301,6 +348,10 @@ export const updateProduct = asyncHandler(async (request, response) => {
 
   if (body.description !== undefined) {
     product.description = body.description;
+  }
+
+  if (body.department !== undefined) {
+    product.department = body.department;
   }
 
   if (body.images !== undefined) {
@@ -345,7 +396,11 @@ export const updateProduct = asyncHandler(async (request, response) => {
     product.stock = body.stock;
   }
 
-  await product.save();
+  if (isStockOnlyUpdate) {
+    await product.save({ validateModifiedOnly: true });
+  } else {
+    await product.save();
+  }
   await product.populate('category');
 
   return sendSuccess(
@@ -365,7 +420,7 @@ export const updateProductStock = asyncHandler(async (request, response) => {
   }
 
   product.stock = stock;
-  await product.save();
+  await product.save({ validateModifiedOnly: true });
   await product.populate('category');
 
   return sendSuccess(

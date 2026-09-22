@@ -2,6 +2,7 @@ import type { CategorySlug, Product } from '../../../../types/catalog';
 import { formatCurrency } from '../../../../utils/format';
 import {
   getCategoryName,
+  getProductDepartmentLabel,
   getProductCompareAtPrice,
   getProductSellingPrice,
   getStockStatus,
@@ -27,11 +28,12 @@ export default function ProductsTable({
       data-products-table
     >
       <div className="overflow-x-auto">
-        <table className="min-w-[1080px] w-full border-collapse text-right">
+        <table className="min-w-[1160px] w-full border-collapse text-right">
           <thead className="bg-noviq-secondary text-xs font-semibold text-noviq-secondaryText">
             <tr>
               <th className="border-b border-noviq-border px-4 py-3">الصورة</th>
               <th className="border-b border-noviq-border px-4 py-3">المنتج</th>
+              <th className="border-b border-noviq-border px-4 py-3">{'\u0627\u0644\u0642\u0633\u0645'}</th>
               <th className="border-b border-noviq-border px-4 py-3">الفئة</th>
               <th className="border-b border-noviq-border px-4 py-3">سعر البيع</th>
               <th className="border-b border-noviq-border px-4 py-3">الخصم</th>
@@ -65,6 +67,13 @@ export default function ProductsTable({
                       {product.name}
                     </p>
                     <p className="mt-1 truncate text-xs text-noviq-muted">{product.slug}</p>
+                  </td>
+                  <td
+                    className={`whitespace-nowrap px-4 py-4 text-sm font-semibold ${
+                      product.department ? 'text-noviq-secondaryText' : 'text-noviq-muted'
+                    }`}
+                  >
+                    {getProductDepartmentLabel(product.department)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-noviq-secondaryText">
                     {getCategoryName(categoryMap, product.category)}

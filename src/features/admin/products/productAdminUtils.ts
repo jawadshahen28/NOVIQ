@@ -1,12 +1,22 @@
-import type { Category, CategorySlug, Product } from '../../../types/catalog';
+import {
+  productDepartmentLabels,
+  productDepartments,
+  unsetProductDepartmentLabel,
+  type Category,
+  type CategorySlug,
+  type Product,
+  type ProductDepartment,
+} from '../../../types/catalog';
 import { getDiscountedPrice } from '../../../utils/format';
 
 export type ProductStockCondition = 'available' | 'low' | 'out';
+export type ProductDepartmentFilter = 'all' | ProductDepartment | 'unset';
 export type ProductStockFilter = 'all' | ProductStockCondition;
 export type ProductStockStatus = ProductStockCondition | 'hidden';
 
 export interface ProductFormValues {
   name: string;
+  department: ProductDepartment | '';
   category: CategorySlug | '';
   description: string;
   sellingPrice: string;
@@ -21,6 +31,7 @@ export interface ProductFormValues {
 export type ProductFormErrors = Partial<
   Record<
     | 'name'
+    | 'department'
     | 'category'
     | 'description'
     | 'sellingPrice'
@@ -36,6 +47,7 @@ export const lowStockThreshold = 3;
 
 export const emptyProductFormValues: ProductFormValues = {
   name: '',
+  department: '',
   category: '',
   description: '',
   sellingPrice: '',
@@ -93,6 +105,10 @@ export function getCategoryName(categoryMap: Map<CategorySlug, string>, slug: Ca
   return categoryMap.get(slug) ?? slug;
 }
 
+export function getProductDepartmentLabel(department?: ProductDepartment | null) {
+  return department ? productDepartmentLabels[department] : unsetProductDepartmentLabel;
+}
+
 export function getProductCompareAtPrice(product: Product) {
   const sellingPrice = product.sellingPrice ?? getProductSellingPrice(product);
   const compareAtPrice =
@@ -148,12 +164,30 @@ export function matchesStockFilter(product: Product, filter: ProductStockFilter)
   return getStockCondition(product.stock) === filter;
 }
 
+export function matchesDepartmentFilter(product: Product, filter: ProductDepartmentFilter) {
+  if (filter === 'all') {
+    return true;
+  }
+
+  if (filter === 'unset') {
+    return !product.department;
+  }
+
+  return product.department === filter;
+}
+
+export const productDepartmentOptions = productDepartments.map((department) => ({
+  label: productDepartmentLabels[department],
+  value: department,
+}));
+
 export function productToFormValues(product: Product): ProductFormValues {
   const sellingPrice = product.sellingPrice ?? getProductSellingPrice(product);
   const compareAtPrice = product.compareAtPrice ?? getProductCompareAtPrice(product);
 
   return {
     name: product.name,
+    department: product.department ?? '',
     category: product.category,
     description: product.description,
     sellingPrice: String(sellingPrice),
@@ -200,6 +234,10 @@ export function validateProductForm(values: ProductFormValues) {
 
   if (!values.name.trim()) {
     errors.name = 'يرجى إدخال اسم المنتج';
+  }
+
+  if (!values.department) {
+    errors.department = '\u064a\u0631\u062c\u0649 \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u0642\u0633\u0645';
   }
 
   if (!values.category) {
@@ -253,6 +291,7 @@ export function createProductFromForm(values: ProductFormValues, existingProduct
     shortDescription: values.description.trim().slice(0, 140),
     specifications: existingProduct?.specifications ?? {},
     name: values.name.trim(),
+    department: values.department as ProductDepartment,
     category: values.category as CategorySlug,
     description: values.description.trim(),
     price,

@@ -1,5 +1,5 @@
 import type { HydratedDocument, Types } from 'mongoose';
-import type { Product } from '../types/models.js';
+import type { Product, ProductDepartment } from '../types/models.js';
 
 interface CategoryReference {
   id: string;
@@ -16,6 +16,7 @@ export interface SerializedProduct {
   category: string;
   categoryId?: string;
   categoryName?: string;
+  department: ProductDepartment | null;
   shortDescription: string;
   description: string;
   price: number;
@@ -103,6 +104,7 @@ export function serializeProduct(
     brand: product.brand ?? '',
     category: category?.slug ?? categoryId,
     compareAtPrice,
+    department: product.department ?? null,
     description: product.description,
     discountPercent: getDiscountPercent(sellingPrice, compareAtPrice),
     id: product.id,

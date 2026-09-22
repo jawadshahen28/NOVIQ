@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PRODUCT_DEPARTMENTS } from '../types/models.js';
 import { mongoObjectIdSchema, paginationQuerySchema, slugSchema } from './commonSchemas.js';
 
 const imageReferenceSchema = z
@@ -13,6 +14,8 @@ const requiredTextSchema = (field: string, max: number) =>
   z.string().trim().min(1, `${field} is required`).max(max);
 
 const moneySchema = z.coerce.number().min(0.01).max(1_000_000);
+const productDepartmentSchema = z.enum(PRODUCT_DEPARTMENTS);
+const adminProductDepartmentFilterSchema = z.enum([...PRODUCT_DEPARTMENTS, 'UNSET'] as const);
 const nullableMoneySchema = z.preprocess(
   (value) => {
     if (typeof value === 'string' && value.trim() === '') {
@@ -84,6 +87,7 @@ const productFieldsSchema = z.object({
   categoryId: mongoObjectIdSchema.optional(),
   compareAtPrice: nullableMoneySchema,
   costPrice: z.coerce.number().min(0).max(1_000_000).optional(),
+  department: productDepartmentSchema.optional(),
   description: requiredTextSchema('Product description', 4_000).optional(),
   images: z.array(imageReferenceSchema).min(1).max(12).optional(),
   isActive: z.boolean().optional(),
@@ -101,6 +105,7 @@ const productFieldsSchema = z.object({
 export const createProductBodySchema = productFieldsSchema
   .extend({
     costPrice: z.coerce.number().min(0).max(1_000_000),
+    department: productDepartmentSchema,
     description: requiredTextSchema('Product description', 4_000),
     images: z.array(imageReferenceSchema).min(1).max(12),
     name: requiredTextSchema('Product name', 160),
@@ -126,11 +131,13 @@ export const updateProductStockBodySchema = z.object({
 
 export const publicProductListQuerySchema = z.object({
   category: slugSchema.optional(),
+  department: productDepartmentSchema.optional(),
   search: optionalTextSchema(100),
 });
 
 export const adminProductListQuerySchema = paginationQuerySchema.extend({
   category: slugSchema.optional(),
+  department: adminProductDepartmentFilterSchema.optional(),
   isActive: z.coerce.boolean().optional(),
   search: optionalTextSchema(100),
   stock: z.enum(['all', 'available', 'low', 'out']).default('all'),

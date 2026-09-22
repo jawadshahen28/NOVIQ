@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import type { Category, Product } from '../types/catalog';
+import type { Category, Product, ProductDepartment } from '../types/catalog';
 
 interface CategoryResponse {
   category: Category;
@@ -26,6 +26,7 @@ interface ProductsResponse {
 interface ListProductsOptions {
   admin?: boolean;
   category?: string;
+  department?: ProductDepartment;
   limit?: number;
   page?: number;
 }
@@ -35,6 +36,10 @@ function createProductListQuery(options: ListProductsOptions) {
 
   if (options.category) {
     params.set('category', options.category);
+  }
+
+  if (options.department) {
+    params.set('department', options.department);
   }
 
   if (options.limit) {
@@ -147,6 +152,7 @@ function toProductPayload(product: Product) {
     category: product.categoryId ? undefined : product.category,
     compareAtPrice,
     costPrice: product.costPrice,
+    department: product.department ?? undefined,
     description: product.description,
     images: product.images,
     isActive: product.isActive ?? product.isAvailable,
