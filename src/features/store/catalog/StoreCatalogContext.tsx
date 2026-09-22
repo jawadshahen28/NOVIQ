@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getProduct, listCategories, listProducts } from '../../../services/catalogApi';
 import type { Category, Product } from '../../../types/catalog';
 
@@ -14,6 +15,7 @@ interface StoreCatalogContextValue {
   categories: Category[];
   products: Product[];
   isLoading: boolean;
+  cacheProducts: (products: Product[]) => void;
   loadProductsByCategory: (slug: string) => Promise<Product[]>;
   loadProduct: (slug: string) => Promise<Product>;
 }
@@ -21,20 +23,28 @@ interface StoreCatalogContextValue {
 const StoreCatalogContext = createContext<StoreCatalogContextValue | undefined>(undefined);
 
 export function StoreCatalogProvider({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const isDepartmentRoute = location.pathname === '/men' || location.pathname === '/women';
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    void Promise.all([listCategories(), listProducts()]).then(
+    setIsLoading(true);
+    void Promise.all([
+      listCategories(),
+      isDepartmentRoute ? Promise.resolve({ products: [] }) : listProducts(),
+    ]).then(
       ([categoryResponse, productResponse]) => {
         setCategories(categoryResponse.categories);
-        setProducts(productResponse.products);
+        if (!isDepartmentRoute) {
+          setProducts(productResponse.products);
+        }
         setIsLoading(false);
       },
       () => setIsLoading(false),
     );
-  }, []);
+  }, [isDepartmentRoute]);
 
   const loadProductsByCategory = useCallback(async (slug: string) => {
     const response = await listProducts({ category: slug });
@@ -43,6 +53,14 @@ export function StoreCatalogProvider({ children }: { children: ReactNode }) {
       ...response.products,
     ]);
     return response.products;
+  }, []);
+
+  const cacheProducts = useCallback((nextProducts: Product[]) => {
+    const nextProductIds = new Set(nextProducts.map((product) => product.id));
+    setProducts((current) => [
+      ...current.filter((product) => !nextProductIds.has(product.id)),
+      ...nextProducts,
+    ]);
   }, []);
 
   const loadProduct = useCallback(async (slug: string) => {
@@ -59,10 +77,11 @@ export function StoreCatalogProvider({ children }: { children: ReactNode }) {
       categories,
       products,
       isLoading,
+      cacheProducts,
       loadProductsByCategory,
       loadProduct,
     }),
-    [categories, isLoading, loadProduct, loadProductsByCategory, products],
+    [cacheProducts, categories, isLoading, loadProduct, loadProductsByCategory, products],
   );
 
   return <StoreCatalogContext.Provider value={value}>{children}</StoreCatalogContext.Provider>;

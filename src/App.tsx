@@ -14,6 +14,7 @@ import { trackStorefrontRoute } from './services/analyticsApi';
 const CartPage = lazy(() => import('./pages/CartPage'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const DepartmentPage = lazy(() => import('./pages/DepartmentPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 const ProductPage = lazy(() => import('./pages/ProductPage'));
@@ -115,8 +116,8 @@ export default function App() {
           <Route element={<StorefrontRouteProviders />}>
             <Route element={<StoreLayout />}>
               <Route index element={<HomePage />} />
-              <Route path="men" element={<Navigate to="/#categories" replace />} />
-              <Route path="women" element={<Navigate to="/#categories" replace />} />
+              <Route path="men" element={<DepartmentPage department="MEN" title="رجال" />} />
+              <Route path="women" element={<DepartmentPage department="WOMEN" title="نساء" />} />
               <Route path="category/:slug" element={<CategoryPage />} />
               <Route path="product/:slug" element={<ProductPage />} />
               <Route path="cart" element={<CartPage />} />

@@ -172,6 +172,16 @@ export default function StorefrontSeo() {
     );
   }
 
+  if (pathname === '/men' || pathname === '/women') {
+    return (
+      <Seo
+        description={homeDescription}
+        image={homeImage}
+        title={SEO_SITE_NAME}
+      />
+    );
+  }
+
   const categoryMatch = matchPath({ end: true, path: '/category/:slug' }, pathname);
 
   if (categoryMatch?.params.slug) {
