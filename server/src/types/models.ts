@@ -126,6 +126,8 @@ export interface StoreSettings extends TimestampFields {
   heroTitle: string;
   heroDescription: string;
   heroImage: string;
+  menDepartmentImage?: string;
+  womenDepartmentImage?: string;
   ordersOpen: boolean;
   closedMessage: string;
   currencyCode: typeof STORE_CURRENCY_CODE;

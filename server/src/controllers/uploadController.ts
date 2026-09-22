@@ -26,7 +26,14 @@ export const uploadImage = asyncHandler(async (request, response) => {
     throw new AppError('نوع الصورة غير مدعوم', 400);
   }
 
-  const folder = type === 'category' ? 'noviq/categories' : type === 'product' ? 'noviq/products' : null;
+  const folder =
+    type === 'category'
+      ? 'noviq/categories'
+      : type === 'product'
+        ? 'noviq/products'
+        : type === 'settings'
+          ? 'noviq/settings'
+          : null;
 
   if (!folder) {
     throw new AppError('نوع الرفع غير صالح', 400);

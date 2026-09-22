@@ -42,7 +42,7 @@ function getOptionalString(value: unknown) {
 
 export async function uploadImageToCloudinary(input: {
   file: Buffer;
-  folder: 'noviq/categories' | 'noviq/products';
+  folder: 'noviq/categories' | 'noviq/products' | 'noviq/settings';
   contentType: string;
 }): Promise<UploadedImage> {
   const cloudinaryConfig = getCloudinaryConfig();

@@ -5,6 +5,7 @@ import {
   Save,
   ShoppingBag,
   Store,
+  Upload,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
@@ -21,6 +22,9 @@ import {
   type AdminSettingsFormValues,
 } from '../features/admin/settings/settingsAdminUtils';
 import { ApiClientError } from '../services/apiClient';
+import { uploadSettingsImage } from '../services/settingsApi';
+import menDepartmentFallback from '../assets/departments/men-accessories.jpg';
+import womenDepartmentFallback from '../assets/departments/women-accessories.jpg';
 
 interface SettingsSectionProps {
   children: ReactNode;
@@ -74,7 +78,12 @@ const serverErrorFields = [
   'copyrightText',
   'heroTitle',
   'heroImage',
+  'menDepartmentImage',
+  'womenDepartmentImage',
 ] as const;
+
+type DepartmentImageField = 'menDepartmentImage' | 'womenDepartmentImage';
+type UploadState = { field?: DepartmentImageField; error: string; success?: DepartmentImageField };
 
 function isServerErrorField(path: string): path is keyof AdminSettingsFormErrors {
   return serverErrorFields.some((field) => field === path);
@@ -98,6 +107,7 @@ export default function AdminSettingsPage() {
   const [errors, setErrors] = useState<AdminSettingsFormErrors>({});
   const [feedback, setFeedback] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadState, setUploadState] = useState<UploadState>({ error: '' });
   const isSavingRef = useRef(false);
 
   useEffect(() => {
@@ -158,6 +168,24 @@ export default function AdminSettingsPage() {
     } finally {
       isSavingRef.current = false;
       setIsSaving(false);
+    }
+  }
+
+  async function handleDepartmentImageUpload(field: DepartmentImageField, file?: File) {
+    if (!file || uploadState.field) {
+      return;
+    }
+
+    setUploadState({ field, error: '' });
+
+    try {
+      const uploadedImage = await uploadSettingsImage(file);
+      updateValue(field, uploadedImage.url);
+      setUploadState({ error: '', success: field });
+    } catch (error) {
+      setUploadState({
+        error: error instanceof Error ? error.message : 'تعذر رفع الصورة، يرجى المحاولة مرة أخرى.',
+      });
     }
   }
 
@@ -493,6 +521,86 @@ export default function AdminSettingsPage() {
         </SettingsSection>
 
         <SettingsSection
+          dataAttribute="department-images"
+          eyebrow="الصفحة الرئيسية"
+          icon={Image}
+          title="صور أقسام الرجال والنساء"
+        >
+          <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+            {([
+              {
+                field: 'menDepartmentImage',
+                fallback: menDepartmentFallback,
+                label: 'صورة قسم الرجال',
+              },
+              {
+                field: 'womenDepartmentImage',
+                fallback: womenDepartmentFallback,
+                label: 'صورة قسم النساء',
+              },
+            ] as const).map(({ fallback, field, label }) => (
+              <div className="grid min-w-0 gap-3" data-department-image-editor={field} key={field}>
+                <p className="text-sm font-semibold text-noviq-secondaryText">{label}</p>
+                <div className="overflow-hidden rounded-md border border-noviq-border bg-noviq-secondary">
+                  <img
+                    alt={`معاينة ${label}`}
+                    className="h-44 w-full object-cover"
+                    data-department-image-preview={field}
+                    src={values[field].trim() || fallback}
+                  />
+                </div>
+                <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-noviq-gold px-4 text-sm font-semibold text-noviq-gold transition hover:bg-noviq-gold/10">
+                  <Upload size={16} strokeWidth={1.8} />
+                  {uploadState.field === field ? 'جاري رفع الصورة...' : 'رفع صورة من الجهاز'}
+                  <input
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    className="sr-only"
+                    data-department-image-upload={field}
+                    disabled={Boolean(uploadState.field)}
+                    onChange={(event) => {
+                      void handleDepartmentImageUpload(field, event.target.files?.[0]);
+                      event.target.value = '';
+                    }}
+                    type="file"
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
+                  <span>رابط / مسار الصورة</span>
+                  <input
+                    aria-describedby={errors[field] ? getFieldErrorId(field) : undefined}
+                    aria-invalid={Boolean(errors[field])}
+                    className="field"
+                    data-department-image-input={field}
+                    dir="ltr"
+                    onChange={(event) => updateValue(field, event.target.value)}
+                    value={values[field]}
+                  />
+                  {errors[field] ? (
+                    <span
+                      className="text-xs font-medium text-noviq-gold"
+                      data-settings-error={field}
+                      id={getFieldErrorId(field)}
+                    >
+                      {errors[field]}
+                    </span>
+                  ) : null}
+                </label>
+                {uploadState.success === field ? (
+                  <p className="text-xs font-medium text-noviq-gold" role="status">
+                    تم رفع الصورة. احفظ التغييرات لتطبيقها في المتجر.
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          {uploadState.error ? (
+            <p className="text-sm font-semibold text-noviq-gold" data-department-upload-error role="alert">
+              {uploadState.error}
+            </p>
+          ) : null}
+        </SettingsSection>
+
+        <SettingsSection
           dataAttribute="orders"
           eyebrow="الطلبات"
           icon={ShoppingBag}
@@ -561,7 +669,7 @@ export default function AdminSettingsPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Button
             className="w-full sm:w-auto"
-            disabled={isSaving || isLoading || Boolean(loadError)}
+            disabled={isSaving || isLoading || Boolean(loadError) || Boolean(uploadState.field)}
             data-settings-save
             icon={<Save size={18} strokeWidth={1.8} />}
             type="submit"

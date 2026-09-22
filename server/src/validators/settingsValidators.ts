@@ -61,6 +61,18 @@ export const updateStoreSettingsBodySchema = z
       .max(2_000)
       .refine(hasValidImagePath, 'Hero image must be a URL or site path')
       .optional(),
+    menDepartmentImage: z
+      .string()
+      .trim()
+      .max(2_000)
+      .refine(hasValidImagePath, 'Men department image must be a URL or site path')
+      .optional(),
+    womenDepartmentImage: z
+      .string()
+      .trim()
+      .max(2_000)
+      .refine(hasValidImagePath, 'Women department image must be a URL or site path')
+      .optional(),
     heroTitle: z.string().trim().min(1).max(180).optional(),
     ordersOpen: z.boolean().optional(),
     storeDescription: z.string().trim().max(1_000).optional(),

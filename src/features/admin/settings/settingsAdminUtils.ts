@@ -12,7 +12,9 @@ export type AdminSettingsFormErrors = Partial<
     | 'facebookUrl'
     | 'copyrightText'
     | 'heroTitle'
-    | 'heroImage',
+    | 'heroImage'
+    | 'menDepartmentImage'
+    | 'womenDepartmentImage',
     string
   >
 >;
@@ -83,6 +85,8 @@ export function normalizeAdminSettings(values: AdminSettingsFormValues): AdminSe
     heroTitle: values.heroTitle.trim(),
     heroDescription: values.heroDescription.trim(),
     heroImage: values.heroImage.trim(),
+    menDepartmentImage: values.menDepartmentImage.trim(),
+    womenDepartmentImage: values.womenDepartmentImage.trim(),
     ordersOpen: values.ordersOpen,
     closedMessage: values.closedMessage.trim(),
   };
@@ -125,6 +129,14 @@ export function validateAdminSettings(values: AdminSettingsFormValues) {
 
   if (!hasValidImagePath(values.heroImage)) {
     errors.heroImage = 'يرجى إدخال رابط أو مسار صورة صحيح';
+  }
+
+  if (!hasValidImagePath(values.menDepartmentImage)) {
+    errors.menDepartmentImage = 'Please enter a valid image URL or site path';
+  }
+
+  if (!hasValidImagePath(values.womenDepartmentImage)) {
+    errors.womenDepartmentImage = 'Please enter a valid image URL or site path';
   }
 
   return errors;

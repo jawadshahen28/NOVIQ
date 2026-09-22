@@ -12,6 +12,8 @@ export interface StoreSettings {
   heroTitle: string;
   heroDescription: string;
   heroImage: string;
+  menDepartmentImage: string;
+  womenDepartmentImage: string;
   ordersOpen: boolean;
   closedMessage: string;
 }
@@ -29,6 +31,8 @@ export const defaultStoreSettings: StoreSettings = {
   heroDescription:
     'اكتشف مجموعة مختارة من الساعات التي تجمع بين الأناقة، الجودة والتفاصيل التي تصنع الفرق.',
   heroImage,
+  menDepartmentImage: '',
+  womenDepartmentImage: '',
   ordersOpen: true,
   closedMessage: 'المتجر مغلق حالياً، يرجى المحاولة لاحقاً.',
 };
@@ -60,6 +64,14 @@ export function normalizeStoreSettings(value: unknown): StoreSettings {
     heroTitle: readRequiredString(candidate.heroTitle, defaultStoreSettings.heroTitle),
     heroDescription: readString(candidate.heroDescription, defaultStoreSettings.heroDescription),
     heroImage: readString(candidate.heroImage, defaultStoreSettings.heroImage),
+    menDepartmentImage: readString(
+      candidate.menDepartmentImage,
+      defaultStoreSettings.menDepartmentImage,
+    ),
+    womenDepartmentImage: readString(
+      candidate.womenDepartmentImage,
+      defaultStoreSettings.womenDepartmentImage,
+    ),
     ordersOpen:
       typeof candidate.ordersOpen === 'boolean'
         ? candidate.ordersOpen

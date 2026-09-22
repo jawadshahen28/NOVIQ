@@ -19,3 +19,19 @@ export function updateAdminSettings(settings: StoreSettings) {
 export function fetchPublicSettings() {
   return apiRequest<StoreSettingsResponse>('/settings');
 }
+
+interface UploadedSettingsImageResponse {
+  url: string;
+  publicId: string;
+}
+
+export function uploadSettingsImage(file: File) {
+  const body = new FormData();
+  body.set('image', file);
+  body.set('type', 'settings');
+
+  return apiRequest<UploadedSettingsImageResponse>('/admin/uploads/image', {
+    body,
+    method: 'POST',
+  });
+}

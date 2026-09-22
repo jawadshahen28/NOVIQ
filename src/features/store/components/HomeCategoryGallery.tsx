@@ -2,8 +2,9 @@ import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import menDepartmentImage from '../../../assets/departments/men-accessories.jpg';
 import womenDepartmentImage from '../../../assets/departments/women-accessories.jpg';
+import { useStoreSettings } from '../settings/StoreSettingsContext';
 
-const departments = [
+const departmentDefinitions = [
   {
     image: menDepartmentImage,
     imagePosition: 'center 56%',
@@ -19,6 +20,15 @@ const departments = [
 ] as const;
 
 export default function HomeCategoryGallery() {
+  const { settings } = useStoreSettings();
+  const departments = departmentDefinitions.map((department) => ({
+    ...department,
+    image:
+      department.to === '/men'
+        ? settings.menDepartmentImage || department.image
+        : settings.womenDepartmentImage || department.image,
+  }));
+
   return (
     <section id="categories" className="bg-noviq-black pt-7 pb-7 lg:pt-9 lg:pb-10">
       <div className="luxury-container">

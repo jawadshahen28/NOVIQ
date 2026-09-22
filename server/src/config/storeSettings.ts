@@ -5,6 +5,8 @@ export const DEFAULT_STORE_SETTINGS = {
   heroDescription:
     'اكتشف مجموعة مختارة من الساعات التي تجمع بين الأناقة، الجودة والتفاصيل التي تصنع الفرق.',
   heroImage: '',
+  menDepartmentImage: '',
+  womenDepartmentImage: '',
   heroTitle: 'ساعة تليق بحضورك.',
   ordersOpen: true,
   storeDescription: 'متجر ساعات مختارة تجمع بين الأناقة والجودة والتفاصيل الراقية.',

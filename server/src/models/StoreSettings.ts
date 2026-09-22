@@ -38,6 +38,16 @@ const storeSettingsSchema = new Schema<StoreSettings>(
       trim: true,
       type: String,
     },
+    menDepartmentImage: {
+      default: DEFAULT_STORE_SETTINGS.menDepartmentImage,
+      trim: true,
+      type: String,
+    },
+    womenDepartmentImage: {
+      default: DEFAULT_STORE_SETTINGS.womenDepartmentImage,
+      trim: true,
+      type: String,
+    },
     heroTitle: {
       default: DEFAULT_STORE_SETTINGS.heroTitle,
       trim: true,

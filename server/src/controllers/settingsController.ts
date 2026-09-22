@@ -14,6 +14,8 @@ const updateableSettingsFields = [
   'heroDescription',
   'heroImage',
   'heroTitle',
+  'menDepartmentImage',
+  'womenDepartmentImage',
   'ordersOpen',
   'storeDescription',
   'storeName',

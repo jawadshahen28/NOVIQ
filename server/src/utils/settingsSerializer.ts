@@ -19,6 +19,8 @@ export interface SerializedStoreSettings {
   heroTitle: string;
   heroDescription: string;
   heroImage: string;
+  menDepartmentImage: string;
+  womenDepartmentImage: string;
   ordersOpen: boolean;
   closedMessage: string;
   currencyCode: string;
@@ -34,6 +36,8 @@ export type PublicStoreSettings = Pick<
   | 'heroDescription'
   | 'heroImage'
   | 'heroTitle'
+  | 'menDepartmentImage'
+  | 'womenDepartmentImage'
   | 'ordersOpen'
   | 'storeDescription'
   | 'storeName'
@@ -67,6 +71,14 @@ export function serializeStoreSettings(settings: HydratedDocument<StoreSettings>
       DEFAULT_STORE_SETTINGS.heroDescription,
     ),
     heroImage: stringValue(settings.heroImage, DEFAULT_STORE_SETTINGS.heroImage),
+    menDepartmentImage: stringValue(
+      settings.menDepartmentImage,
+      DEFAULT_STORE_SETTINGS.menDepartmentImage,
+    ),
+    womenDepartmentImage: stringValue(
+      settings.womenDepartmentImage,
+      DEFAULT_STORE_SETTINGS.womenDepartmentImage,
+    ),
     heroTitle: nonEmptyStringValue(settings.heroTitle, DEFAULT_STORE_SETTINGS.heroTitle),
     id: settings.id,
     ordersOpen:
@@ -114,6 +126,8 @@ export function serializePublicStoreSettings(settings: HydratedDocument<StoreSet
     heroDescription: serialized.heroDescription,
     heroImage: serialized.heroImage,
     heroTitle: serialized.heroTitle,
+    menDepartmentImage: serialized.menDepartmentImage,
+    womenDepartmentImage: serialized.womenDepartmentImage,
     ordersOpen: serialized.ordersOpen,
     storeDescription: serialized.storeDescription,
     storeName: serialized.storeName,
