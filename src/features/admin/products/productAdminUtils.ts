@@ -18,6 +18,7 @@ export interface ProductFormValues {
   name: string;
   department: ProductDepartment | '';
   category: CategorySlug | '';
+  brand: string;
   description: string;
   sellingPrice: string;
   compareAtPrice: string;
@@ -33,6 +34,7 @@ export type ProductFormErrors = Partial<
     | 'name'
     | 'department'
     | 'category'
+    | 'brand'
     | 'description'
     | 'sellingPrice'
     | 'compareAtPrice'
@@ -49,6 +51,7 @@ export const emptyProductFormValues: ProductFormValues = {
   name: '',
   department: '',
   category: '',
+  brand: '',
   description: '',
   sellingPrice: '',
   compareAtPrice: '',
@@ -189,6 +192,7 @@ export function productToFormValues(product: Product): ProductFormValues {
     name: product.name,
     department: product.department ?? '',
     category: product.category,
+    brand: product.brand ?? '',
     description: product.description,
     sellingPrice: String(sellingPrice),
     compareAtPrice: compareAtPrice ? String(compareAtPrice) : '',
@@ -214,6 +218,10 @@ export function normalizeImages(images: string[], primaryImageIndex: number) {
   const primaryImage = cleanImages[safePrimaryIndex];
 
   return [primaryImage, ...cleanImages.filter((_, index) => index !== safePrimaryIndex)];
+}
+
+export function normalizeProductBrand(value: string) {
+  return value.trim().replace(/\s+/g, ' ');
 }
 
 export function getDerivedDiscountPercent(sellingPrice: number, compareAtPrice: number | null) {
@@ -242,6 +250,10 @@ export function validateProductForm(values: ProductFormValues) {
 
   if (!values.category) {
     errors.category = 'يرجى اختيار الفئة';
+  }
+
+  if (normalizeProductBrand(values.brand).length > 120) {
+    errors.brand = '\u064a\u062c\u0628 \u0623\u0644\u0627 \u062a\u062a\u062c\u0627\u0648\u0632 \u0627\u0644\u0645\u0627\u0631\u0643\u0629 120 \u062d\u0631\u0641\u064b\u0627';
   }
 
   if (!values.description.trim()) {
@@ -293,6 +305,7 @@ export function createProductFromForm(values: ProductFormValues, existingProduct
     name: values.name.trim(),
     department: values.department as ProductDepartment,
     category: values.category as CategorySlug,
+    brand: normalizeProductBrand(values.brand),
     description: values.description.trim(),
     price,
     compareAtPrice,

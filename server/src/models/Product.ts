@@ -121,6 +121,7 @@ productSchema.pre('validate', function setPrimaryImage() {
 productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ category: 1, isActive: 1 });
 productSchema.index({ department: 1, isActive: 1, category: 1 });
+productSchema.index({ department: 1, isActive: 1, category: 1, brand: 1 });
 productSchema.index({ isActive: 1, createdAt: -1, name: 1 });
 
 export const ProductModel = model<Product>('Product', productSchema);

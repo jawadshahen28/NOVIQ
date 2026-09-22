@@ -130,6 +130,7 @@ export const updateProductStockBodySchema = z.object({
 }).strict();
 
 export const publicProductListQuerySchema = z.object({
+  brand: optionalTextSchema(120),
   category: slugSchema.optional(),
   department: productDepartmentSchema.optional(),
   search: optionalTextSchema(100),

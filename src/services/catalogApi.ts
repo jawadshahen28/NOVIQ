@@ -25,6 +25,7 @@ interface ProductsResponse {
 
 interface ListProductsOptions {
   admin?: boolean;
+  brand?: string;
   category?: string;
   department?: ProductDepartment;
   limit?: number;
@@ -33,6 +34,10 @@ interface ListProductsOptions {
 
 function createProductListQuery(options: ListProductsOptions) {
   const params = new URLSearchParams();
+
+  if (options.brand) {
+    params.set('brand', options.brand);
+  }
 
   if (options.category) {
     params.set('category', options.category);
@@ -148,6 +153,7 @@ function toProductPayload(product: Product) {
       : product.price);
 
   return {
+    brand: product.brand?.trim() ?? '',
     categoryId: product.categoryId,
     category: product.categoryId ? undefined : product.category,
     compareAtPrice,

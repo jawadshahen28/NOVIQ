@@ -319,6 +319,25 @@ export default function ProductFormDrawer({
                   </label>
 
                   <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
+                    <span>{'\u0627\u0644\u0645\u0627\u0631\u0643\u0629'}</span>
+                    <input
+                      aria-describedby={errors.brand ? getFieldErrorId('brand') : undefined}
+                      aria-invalid={Boolean(errors.brand)}
+                      className="field"
+                      maxLength={120}
+                      onChange={(event) => updateValue('brand', event.target.value)}
+                      placeholder={'\u0623\u062f\u062e\u0644 \u0627\u0644\u0645\u0627\u0631\u0643\u0629'}
+                      value={values.brand}
+                      data-product-brand-input
+                    />
+                    {errors.brand ? (
+                      <span id={getFieldErrorId('brand')} className="text-xs font-medium text-noviq-gold">
+                        {errors.brand}
+                      </span>
+                    ) : null}
+                  </label>
+
+                  <label className="grid gap-2 text-sm font-semibold text-noviq-secondaryText">
                     <span>حالة المنتج</span>
                     <select
                       className="field"

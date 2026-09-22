@@ -18,6 +18,10 @@ import type {
 const productNotFoundMessage = 'Product not found';
 const productDepartmentRequiredMessage = 'Product department is required';
 
+function normalizeBrand(value: string) {
+  return value.trim().replace(/\s+/g, ' ');
+}
+
 function normalizeImages(images: string[], primaryImage?: string) {
   const uniqueImages = images.filter((image, index, allImages) => allImages.indexOf(image) === index);
 
@@ -143,13 +147,17 @@ function addAdminDepartmentFilter(
 }
 
 export const listPublicProducts = asyncHandler(async (request, response) => {
-  const { category, department, search } = request.query as PublicProductListQuery;
+  const { brand, category, department, search } = request.query as PublicProductListQuery;
   const filter: Record<string, unknown> = {
     isActive: true,
   };
 
   if (department) {
     filter.department = department;
+  }
+
+  if (brand) {
+    filter.brand = new RegExp(`^${escapeRegex(normalizeBrand(brand))}$`, 'i');
   }
 
   if (category) {
@@ -286,7 +294,10 @@ export const createProduct = asyncHandler(async (request, response) => {
   };
 
   if (body.brand !== undefined) {
-    productInput.brand = body.brand;
+    const brand = normalizeBrand(body.brand);
+    if (brand) {
+      productInput.brand = brand;
+    }
   }
 
   if (body.compareAtPrice !== null && body.compareAtPrice !== undefined) {
@@ -339,7 +350,8 @@ export const updateProduct = asyncHandler(async (request, response) => {
   assertValidCompareAtPrice(nextSellingPrice, nextCompareAtPrice);
 
   if (body.brand !== undefined) {
-    product.brand = body.brand;
+    const brand = normalizeBrand(body.brand);
+    product.set('brand', brand || undefined);
   }
 
   if (body.costPrice !== undefined) {

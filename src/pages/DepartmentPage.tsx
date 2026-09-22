@@ -10,11 +10,21 @@ interface DepartmentPageProps {
   title: string;
 }
 
+function normalizeBrand(value: string) {
+  return value.trim().replace(/\s+/g, ' ');
+}
+
+function getBrandKey(value: string) {
+  return normalizeBrand(value).toLocaleLowerCase();
+}
+
 export default function DepartmentPage({ department, title }: DepartmentPageProps) {
   const { cacheProducts, categories } = useStoreCatalog();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category')?.trim().toLowerCase() ?? '';
+  const selectedBrand = normalizeBrand(searchParams.get('brand') ?? '');
   const [departmentProducts, setDepartmentProducts] = useState<Product[]>([]);
+  const [categoryProducts, setCategoryProducts] = useState<Product[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -26,6 +36,7 @@ export default function DepartmentPage({ department, title }: DepartmentPageProp
       setIsLoading(true);
       setHasError(false);
       setDepartmentProducts([]);
+      setCategoryProducts([]);
       setProducts([]);
 
       try {
@@ -39,6 +50,9 @@ export default function DepartmentPage({ department, title }: DepartmentPageProp
         cacheProducts(departmentResponse.products);
 
         if (!selectedCategory) {
+          if (selectedBrand) {
+            setSearchParams({}, { replace: true });
+          }
           setProducts(departmentResponse.products);
           return;
         }
@@ -53,12 +67,37 @@ export default function DepartmentPage({ department, title }: DepartmentPageProp
           category: selectedCategory,
           department,
         });
-        if (isCurrent) {
+        if (!isCurrent) return;
+
+        setCategoryProducts(categoryResponse.products);
+
+        if (!selectedBrand) {
           setProducts(categoryResponse.products);
+          return;
+        }
+
+        const availableBrand = categoryResponse.products
+          .map((product) => normalizeBrand(product.brand ?? ''))
+          .find((brand) => brand && getBrandKey(brand) === getBrandKey(selectedBrand));
+
+        if (!availableBrand) {
+          setSearchParams({ category: selectedCategory }, { replace: true });
+          setProducts(categoryResponse.products);
+          return;
+        }
+
+        const brandResponse = await listProducts({
+          brand: availableBrand,
+          category: selectedCategory,
+          department,
+        });
+        if (isCurrent) {
+          setProducts(brandResponse.products);
         }
       } catch {
         if (isCurrent) {
           setDepartmentProducts([]);
+          setCategoryProducts([]);
           setProducts([]);
           setHasError(true);
         }
@@ -74,15 +113,34 @@ export default function DepartmentPage({ department, title }: DepartmentPageProp
     return () => {
       isCurrent = false;
     };
-  }, [cacheProducts, department, selectedCategory, setSearchParams]);
+  }, [cacheProducts, department, selectedBrand, selectedCategory, setSearchParams]);
 
   const availableCategories = useMemo(() => {
     const availableSlugs = new Set(departmentProducts.map((product) => product.category));
     return categories.filter((category) => availableSlugs.has(category.slug));
   }, [categories, departmentProducts]);
 
+  const availableBrands = useMemo(() => {
+    const brands = new Map<string, string>();
+
+    categoryProducts.forEach((product) => {
+      const brand = normalizeBrand(product.brand ?? '');
+      if (brand) {
+        brands.set(getBrandKey(brand), brands.get(getBrandKey(brand)) ?? brand);
+      }
+    });
+
+    return Array.from(brands.values()).sort((first, second) =>
+      first.localeCompare(second, undefined, { sensitivity: 'base' }),
+    );
+  }, [categoryProducts]);
+
   function selectCategory(category: string) {
     setSearchParams(category ? { category } : {});
+  }
+
+  function selectBrand(brand: string) {
+    setSearchParams(brand ? { category: selectedCategory, brand } : { category: selectedCategory });
   }
 
   return (
@@ -140,6 +198,53 @@ export default function DepartmentPage({ department, title }: DepartmentPageProp
           </div>
         </div>
       </section>
+
+      {selectedCategory ? (
+        <section className="border-b border-noviq-border py-5 sm:py-6">
+          <div className="luxury-container">
+            <h2 className="mb-4 font-heading text-xl font-semibold text-noviq-gold sm:text-2xl">
+              {'\u0627\u0644\u0645\u0627\u0631\u0643\u0627\u062a'}
+            </h2>
+            <div
+              className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              role="group"
+              aria-label={'\u062a\u0635\u0641\u064a\u0629 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0645\u0627\u0631\u0643\u0629'}
+            >
+              <button
+                className={`min-h-11 shrink-0 rounded border px-5 text-sm font-semibold transition ${
+                  !selectedBrand
+                    ? 'border-noviq-gold bg-noviq-gold text-noviq-black'
+                    : 'border-noviq-border bg-noviq-card text-noviq-secondaryText hover:border-noviq-gold hover:text-noviq-gold'
+                }`}
+                onClick={() => selectBrand('')}
+                type="button"
+                aria-pressed={!selectedBrand}
+              >
+                {'\u0643\u0644 \u0627\u0644\u0645\u0627\u0631\u0643\u0627\u062a'}
+              </button>
+              {availableBrands.map((brand) => {
+                const isSelected = getBrandKey(selectedBrand) === getBrandKey(brand);
+
+                return (
+                  <button
+                    key={getBrandKey(brand)}
+                    className={`min-h-11 shrink-0 rounded border px-5 text-sm font-semibold transition ${
+                      isSelected
+                        ? 'border-noviq-gold bg-noviq-gold text-noviq-black'
+                        : 'border-noviq-border bg-noviq-card text-noviq-secondaryText hover:border-noviq-gold hover:text-noviq-gold'
+                    }`}
+                    onClick={() => selectBrand(brand)}
+                    type="button"
+                    aria-pressed={isSelected}
+                  >
+                    {brand}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="py-7 pb-12 lg:py-10 lg:pb-14">
         <div className="luxury-container">
