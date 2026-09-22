@@ -6,6 +6,8 @@ import Seo, {
   type JsonLdValue,
 } from '../../../components/Seo';
 import fallbackOgImage from '../../../assets/noviq-reference-hero-lcp.jpg';
+import menDepartmentImage from '../../../assets/departments/men-accessories.jpg';
+import womenDepartmentImage from '../../../assets/departments/women-accessories.jpg';
 import type { Category, Product } from '../../../types/catalog';
 import { getDiscountedPrice, STORE_CURRENCY_CODE } from '../../../utils/format';
 import { useStoreCatalog } from '../catalog/StoreCatalogContext';
@@ -29,6 +31,25 @@ const workflowSeo: Record<string, { description: string; title: string }> = {
     title: `تم استلام الطلب | ${SEO_SITE_NAME}`,
   },
 };
+
+const departmentSeo = {
+  '/men': {
+    breadcrumbName: '\u0631\u062c\u0627\u0644',
+    description:
+      '\u0627\u0643\u062a\u0634\u0641 \u0625\u0643\u0633\u0633\u0648\u0627\u0631\u0627\u062a \u0631\u062c\u0627\u0644\u064a\u0629 \u0645\u062e\u062a\u0627\u0631\u0629 \u0645\u0646 NOVIQ\u060c \u0645\u0646 \u0627\u0644\u0633\u0627\u0639\u0627\u062a \u0648\u0627\u0644\u0646\u0638\u0627\u0631\u0627\u062a \u0625\u0644\u0649 \u0627\u0644\u0645\u062d\u0627\u0641\u0638 \u0628\u062a\u0635\u0627\u0645\u064a\u0645 \u062a\u062c\u0645\u0639 \u0628\u064a\u0646 \u0627\u0644\u0623\u0646\u0627\u0642\u0629 \u0648\u0627\u0644\u062c\u0648\u062f\u0629.',
+    fallbackImage: menDepartmentImage,
+    imageSetting: 'menDepartmentImage',
+    title: `NOVIQ | \u0625\u0643\u0633\u0633\u0648\u0627\u0631\u0627\u062a \u0631\u062c\u0627\u0644\u064a\u0629`,
+  },
+  '/women': {
+    breadcrumbName: '\u0646\u0633\u0627\u0621',
+    description:
+      '\u0627\u0643\u062a\u0634\u0641\u064a \u0625\u0643\u0633\u0633\u0648\u0627\u0631\u0627\u062a \u0646\u0633\u0627\u0626\u064a\u0629 \u0645\u062e\u062a\u0627\u0631\u0629 \u0645\u0646 NOVIQ\u060c \u0645\u0646 \u0627\u0644\u0633\u0627\u0639\u0627\u062a \u0648\u0627\u0644\u0646\u0638\u0627\u0631\u0627\u062a \u0625\u0644\u0649 \u0627\u0644\u0645\u062d\u0627\u0641\u0638 \u0628\u062a\u0635\u0627\u0645\u064a\u0645 \u062a\u062c\u0645\u0639 \u0628\u064a\u0646 \u0627\u0644\u0623\u0646\u0627\u0642\u0629 \u0648\u0627\u0644\u062c\u0648\u062f\u0629.',
+    fallbackImage: womenDepartmentImage,
+    imageSetting: 'womenDepartmentImage',
+    title: `NOVIQ | \u0625\u0643\u0633\u0633\u0648\u0627\u0631\u0627\u062a \u0646\u0633\u0627\u0626\u064a\u0629`,
+  },
+} as const;
 
 function normalizePathname(pathname: string) {
   return pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
@@ -172,12 +193,24 @@ export default function StorefrontSeo() {
     );
   }
 
-  if (pathname === '/men' || pathname === '/women') {
+  const currentDepartmentSeo =
+    pathname === '/men' || pathname === '/women' ? departmentSeo[pathname] : undefined;
+
+  if (currentDepartmentSeo) {
+    const departmentImage = settings[currentDepartmentSeo.imageSetting];
+
     return (
       <Seo
-        description={homeDescription}
-        image={homeImage}
-        title={SEO_SITE_NAME}
+        canonicalPath={pathname}
+        description={currentDepartmentSeo.description}
+        image={departmentImage || currentDepartmentSeo.fallbackImage}
+        structuredData={[
+          createBreadcrumbList([
+            { item: createSiteUrl('/'), name: SEO_SITE_NAME },
+            { item: createSiteUrl(pathname), name: currentDepartmentSeo.breadcrumbName },
+          ]),
+        ]}
+        title={currentDepartmentSeo.title}
       />
     );
   }

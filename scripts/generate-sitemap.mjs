@@ -126,6 +126,8 @@ async function generateSitemap() {
   const products = getSlugItems(productData.products, 'products');
   const entries = [
     renderUrl(createStorefrontUrl('/'), '1.0'),
+    renderUrl(createStorefrontUrl('/men'), '0.9'),
+    renderUrl(createStorefrontUrl('/women'), '0.9'),
     ...categories.map((category) => renderUrl(createStorefrontUrl(`/category/${category.slug}`), '0.8')),
     ...products.map((product) => renderUrl(createStorefrontUrl(`/product/${product.slug}`), '0.7')),
   ];
